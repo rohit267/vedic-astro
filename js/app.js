@@ -54,26 +54,46 @@
         <td>${pl.nakshatra} (${pl.pada})</td><td>${pl.house}</td><td>${tags.join(' ') || '—'}</td></tr>`;
     }
     html += `</tbody></table></div>`;
+    html += manglikPanel(c);
     $('tab-kundali').innerHTML = html;
   }
 
-  /* ---------- CHARTS D1–D9 ---------- */
-  const VARGA_KEYS = Object.keys(VA.VARGAS);
+  function manglikPanel(chart) {
+    const m = VA.manglik(chart);
+    const rows = m.references.map((r) => {
+      let st;
+      if (r.manglik) st = `<span class="pill de">Manglik · ${VA.ordinal(r.house)}</span>`;
+      else if (r.conjunct) st = `Mars conjunct <span class="pill own">1st</span> <span class="hint">(conjunction — not a dosha)</span>`;
+      else st = `<span class="pill ex">clear · ${VA.ordinal(r.house)}</span>`;
+      return `<tr><td><b>${r.label}</b>${r.primary ? '' : ' <span class="hint">(secondary)</span>'}</td><td>${st}</td></tr>`;
+    }).join('');
+    const verdict = m.isManglik
+      ? `Manglik${m.marsDignity === 'Debilitated' ? ' — but Mars is debilitated (weak), so it is mild' : ''}`
+      : 'Non-Manglik';
+    return `<div class="card"><h3>🔥 Mangal (Manglik) status — Lagna · Chandra · Shukra</h3>
+      <table class="grid"><thead><tr><th>Reference chart</th><th>Mars position</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="dosha-note" style="border-left:3px solid var(--${m.isManglik ? 'warn' : 'good'})">
+      <b>Overall: ${verdict}.</b> The standard verdict is read from Lagna &amp; Chandra (Moon); Shukra (Venus) is a secondary reference, and Mars conjunct Venus is not counted as a dosha.</div></div>`;
+  }
+
+  /* ---------- CHARTS (reference + D1–D9) ---------- */
+  const CHART_KEYS = ['LAGNA', 'CHANDRA', 'SHUKRA', 'D2', 'D3', 'D4', 'D7', 'D9'];
+  const CHART_LABEL = { ALL: 'All', LAGNA: 'Lagna', CHANDRA: 'Chandra', SHUKRA: 'Shukra', D2: 'D2', D3: 'D3', D4: 'D4', D7: 'D7', D9: 'D9' };
   function renderVargaSeg() {
     const seg = $('varga-seg');
-    seg.innerHTML = ['ALL', ...VARGA_KEYS].map((k) =>
-      `<button data-varga="${k}" class="${k === curVarga ? 'active' : ''}">${k === 'ALL' ? 'All' : k}</button>`).join('');
+    seg.innerHTML = ['ALL', ...CHART_KEYS].map((k) =>
+      `<button data-varga="${k}" class="${k === curVarga ? 'active' : ''}">${CHART_LABEL[k] || k}</button>`).join('');
     seg.querySelectorAll('button').forEach((b) => b.onclick = () => { curVarga = b.dataset.varga; renderVargaSeg(); renderCharts(); });
   }
   function chartBox(key) {
     const box = document.createElement('div'); box.className = 'chart-box';
-    box.innerHTML = `<h4>${VA.VARGAS[key].name}</h4><div class="cbody"></div>`;
+    box.innerHTML = `<h4>${VA.chartName(key)}</h4><div class="cbody"></div>`;
     VA.renderChart(box.querySelector('.cbody'), chart1, key, curStyle);
     return box;
   }
   function renderCharts() {
     const area = $('charts-area'); area.innerHTML = '';
-    const keys = curVarga === 'ALL' ? VARGA_KEYS : [curVarga];
+    const keys = curVarga === 'ALL' ? CHART_KEYS : [curVarga];
     keys.forEach((k) => area.appendChild(chartBox(k)));
   }
 
@@ -122,7 +142,7 @@
     const [tone, desc] = TONE[dasha1.current.md.lord];
     html += `<p>You are in a <b>${dasha1.current.md.lord}</b> Mahadasha — ${desc} — with <b>${dasha1.current.ad.lord}</b> running inside it (${desc && TONE[dasha1.current.ad.lord][1]}).</p>`;
     html += `<div class="dosha-note" style="border-left:3px solid var(--${inSS ? 'warn' : 'good'})">
-      <b>Sade Sati:</b> ${inSS ? `Active — Saturn is in ${VA.SIGNS[satSign]}, the ${fromMoon === 12 ? '12th (rising)' : fromMoon === 1 ? '1st (peak)' : '2nd (setting)'} from your Moon. A heavy but maturing ~2.5-year stretch; go steady.` : `Not active right now — Saturn is in ${VA.SIGNS[satSign]}, the ${fromMoon}th from your Moon.`}</div>`;
+      <b>Sade Sati:</b> ${inSS ? `Active — Saturn is in ${VA.SIGNS[satSign]}, the ${fromMoon === 12 ? '12th (rising)' : fromMoon === 1 ? '1st (peak)' : '2nd (setting)'} from your Moon. A heavy but maturing ~2.5-year stretch; go steady.` : `Not active right now — Saturn is in ${VA.SIGNS[satSign]}, the ${VA.ordinal(fromMoon)} from your Moon.`}</div>`;
     html += `<div class="dosha-note" style="border-left:3px solid var(--${mang.isManglik ? 'warn' : 'good'})">
       <b>Manglik:</b> ${mang.isManglik ? `Yes — flagged from ${mang.flaggedFrom.join(', ')}.${mang.marsDignity === 'Debilitated' ? ' Mars is debilitated (weak), which softens it.' : ''}` : 'No — Mars is clear of the sensitive houses.'}</div>`;
     html += `</div>`;

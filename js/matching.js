@@ -92,22 +92,33 @@
     };
   }
 
-  // Manglik / Mangal dosha from a full chart. Mars in houses 1,2,4,7,8,12 from Lagna/Moon/Venus.
+  /* Manglik / Mangal dosha. The standard verdict (and DrikPanchang's) is taken from
+   * Lagna and Chandra (Moon) — the two primary references. Shukra (Venus) is a
+   * secondary/regional reference. Mars in the SAME sign as the reference planet
+   * (1st house = a conjunction) is not counted as a dosha in the standard verdict,
+   * which is why Mars-conjunct-Venus does not make someone Manglik. */
   function manglik(chart) {
     const MH = new Set([1, 2, 4, 7, 8, 12]);
     const mars = chart.planets.Mars.signIdx;
-    const from = (refSignIdx) => ((mars - refSignIdx + 12) % 12) + 1;
-    const refs = {
-      Lagna: from(chart.lagnaSign),
-      Moon: from(chart.planets.Moon.signIdx),
-      Venus: from(chart.planets.Venus.signIdx),
-    };
-    const flags = Object.entries(refs).filter(([, h]) => MH.has(h)).map(([k, h]) => `${k} (${h}th)`);
+    const houseFrom = (refSignIdx) => ((mars - refSignIdx + 12) % 12) + 1;
+    const defs = [
+      { key: 'Lagna', label: 'Lagna (Ascendant)', signIdx: chart.lagnaSign, primary: true },
+      { key: 'Chandra', label: 'Chandra (Moon)', signIdx: chart.planets.Moon.signIdx, primary: true },
+      { key: 'Shukra', label: 'Shukra (Venus)', signIdx: chart.planets.Venus.signIdx, primary: false },
+    ];
+    const references = defs.map((r) => {
+      const house = houseFrom(r.signIdx);
+      const conjunct = house === 1;                 // Mars in the same sign as the reference
+      return { key: r.key, label: r.label, house, primary: r.primary, conjunct,
+        manglik: MH.has(house) && !(conjunct && !r.primary) };  // conjunction w/ Venus not counted
+    });
+    const primaryFlags = references.filter((r) => r.primary && r.manglik);
     return {
-      isManglik: flags.length > 0,
-      from: refs,
-      flaggedFrom: flags,
-      marsDignity: chart.planets.Mars.dignity, // debilitated/weak Mars softens the dosha
+      references,
+      isManglik: primaryFlags.length > 0,
+      flaggedFrom: primaryFlags.map((r) => `${r.key} (${VA.ordinal(r.house)})`),
+      marsSign: chart.planets.Mars.sign,
+      marsDignity: chart.planets.Mars.dignity,      // debilitated/weak Mars softens the dosha
     };
   }
 

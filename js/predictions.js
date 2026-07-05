@@ -101,7 +101,7 @@
       sections.push(wrap('🪐', 'Sade Sati (Saturn over your Moon)', [
         inSadeSati
           ? `You are currently in Sade Sati — transiting Saturn is in ${sign(satSign)}, the ${fromMoon === 12 ? '12th (rising phase)' : fromMoon === 1 ? '1st (peak phase)' : '2nd (setting phase)'} from your Moon. It\'s a maturing, pressure-filled ~2.5-year stretch. Heavy, but it builds real strength — go steady, rest, and don\'t make fear-based decisions.`
-          : `You are not in Sade Sati right now — transiting Saturn is in ${sign(satSign)}, the ${fromMoon}th from your Moon. Saturn\'s hardest pass on your mind is not active.`,
+          : `You are not in Sade Sati right now — transiting Saturn is in ${sign(satSign)}, the ${VA.ordinal(fromMoon)} from your Moon. Saturn\'s hardest pass on your mind is not active.`,
       ]));
     }
 

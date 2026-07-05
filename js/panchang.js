@@ -104,9 +104,12 @@
     D9: { name: 'Navamsa (D9)', fn: d9 },
   };
 
+  // 1 -> "1st", 2 -> "2nd", 12 -> "12th"
+  function ordinal(n) { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+
   Object.assign(VA, {
     SIGNS, SIGN_SHORT, SIGN_LORD, NAKSHATRAS, PLANETS, PLANET_SHORT,
-    NAK_LEN, PADA_LEN, nakLord, decompose, dignity, isCombust, VARGAS, norm360,
+    NAK_LEN, PADA_LEN, nakLord, decompose, dignity, isCombust, VARGAS, norm360, ordinal,
   });
   root.VA = VA;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

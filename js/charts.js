@@ -75,7 +75,9 @@
     return s;
   }
 
-  const RENDERERS = { north, south, east };
+  // West India (Maharashtra/Gujarat) traditionally uses the North diamond format.
+  const RENDERERS = { north, south, east, west: north };
+  const REF_CHARTS = { LAGNA: 'Lagna / Rashi (D1)', CHANDRA: 'Chandra (Moon) chart', SHUKRA: 'Shukra (Venus) chart' };
 
   function svg(inner) {
     return `<svg viewBox="0 0 ${W} ${W}" class="vc-svg" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
@@ -97,11 +99,26 @@
     return { lagnaSign: v.lagnaSign, occupants: occ };
   }
 
-  function render(container, chart, vargaKey, style) {
-    const data = vargaData(chart, vargaKey);
-    container.innerHTML = svg(RENDERERS[style](data));
+  // Reference charts: same natal (D1) positions, but read with Moon/Venus as the 1st house.
+  function chartData(chart, key) {
+    if (key in REF_CHARTS) {
+      const base = d1Data(chart);
+      let lagnaSign = chart.lagnaSign;
+      if (key === 'CHANDRA') lagnaSign = chart.planets.Moon.signIdx;
+      else if (key === 'SHUKRA') lagnaSign = chart.planets.Venus.signIdx;
+      return { lagnaSign, occupants: base.occupants };
+    }
+    return vargaData(chart, key);
+  }
+  function chartName(key) { return REF_CHARTS[key] || (VA.VARGAS[key] && VA.VARGAS[key].name) || key; }
+
+  function render(container, chart, key, style) {
+    container.innerHTML = svg(RENDERERS[style](chartData(chart, key)));
   }
 
-  Object.assign(VA, { renderChart: render, chartSVG: (data, style) => svg(RENDERERS[style](data)), vargaData });
+  Object.assign(VA, {
+    renderChart: render, chartSVG: (data, style) => svg(RENDERERS[style](data)),
+    vargaData, chartData, chartName, REF_CHARTS,
+  });
   root.VA = VA;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
