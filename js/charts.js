@@ -13,12 +13,12 @@
   const line = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="vc-line"/>`;
   function cell(x, y, label, planets, isLagna) {
     let s = '';
-    if (label) s += `<text x="${x}" y="${y - 6}" class="vc-sign${isLagna ? ' vc-lagna' : ''}" text-anchor="middle">${esc(label)}${isLagna ? ' ⟵La' : ''}</text>`;
+    if (label) s += `<text x="${x}" y="${y - 8}" class="vc-sign${isLagna ? ' vc-lagna' : ''}" text-anchor="middle">${esc(label)}${isLagna ? ' La' : ''}</text>`;
     const per = 3;
     planets.forEach((p, i) => {
       const col = i % per, rowN = Math.floor(i / per);
-      const px = x + (col - (Math.min(planets.length, per) - 1) / 2) * 22;
-      const py = y + 12 + rowN * 15;
+      const px = x + (col - (Math.min(planets.length, per) - 1) / 2) * 25;
+      const py = y + 14 + rowN * 18;
       s += `<text x="${px}" y="${py}" class="vc-planet" text-anchor="middle">${esc(p)}</text>`;
     });
     return s;
@@ -88,7 +88,7 @@
     const occ = Array.from({ length: 12 }, () => []);
     for (const p of VA.PLANETS) {
       const pl = chart.planets[p];
-      occ[pl.signIdx].push(pl.short + (pl.retro ? '↩' : '') + (pl.combust ? '·' : ''));
+      occ[pl.signIdx].push(pl.short + (pl.retro ? '↩' : ''));
     }
     return { lagnaSign: chart.lagnaSign, occupants: occ };
   }

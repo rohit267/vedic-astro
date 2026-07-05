@@ -20,7 +20,7 @@ a { color: var(--accent); }
 
 .card { background: linear-gradient(180deg, var(--card), var(--bg2)); border: 1px solid var(--line);
   border-radius: var(--radius); padding: 18px; margin: 14px auto; max-width: var(--maxw); }
-.birth-card { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(6px); }
+/* birth form scrolls normally (not sticky) */
 
 .birth-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 14px; }
 .birth-grid label { display: flex; flex-direction: column; font-size: .78rem; color: var(--muted); gap: 4px; }
@@ -80,16 +80,16 @@ table.grid tr:hover td { background: rgba(139,124,255,.06); }
 .seg { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; flex-wrap: wrap; }
 .seg button { border: none; border-radius: 0; background: transparent; color: var(--muted); padding: 8px 13px; font-size: .85rem; }
 .seg button.active { background: var(--accent2); color: #fff; }
-.charts-area { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.charts-area { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 300px)); gap: 16px; justify-content: center; }
 .chart-box { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
 .chart-box h4 { margin: 0 0 8px; color: var(--gold); font-size: .95rem; }
 .vc-svg { width: 100%; height: auto; display: block; }
 .vc-frame { fill: none; stroke: var(--line); stroke-width: 1.5; }
 .vc-line { stroke: var(--line); stroke-width: 1; }
 .vc-center { fill: rgba(139,124,255,.05); stroke: none; }
-.vc-sign { fill: var(--muted); font-size: 10px; font-weight: 600; }
+.vc-sign { fill: var(--muted); font-size: 13px; font-weight: 700; }
 .vc-lagna { fill: var(--gold); }
-.vc-planet { fill: var(--ink); font-size: 12px; font-weight: 600; }
+.vc-planet { fill: var(--ink); font-size: 15px; font-weight: 700; }
 
 /* Sections / readings */
 .reading-sec { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 12px; padding: 14px 16px; margin: 12px 0; }
