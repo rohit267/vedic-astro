@@ -20,7 +20,10 @@
       <label>Date of birth <input id="p1-date" type="date" value="1947-08-15" /></label>
       <label>Time of birth <input id="p1-time" type="time" value="00:00" /></label>
       <label>Birthplace
-        <input id="p1-place" type="text" list="city-list" placeholder="type a city…" value="New Delhi" />
+        <span class="ac-wrap">
+          <input id="p1-place" type="text" autocomplete="off" placeholder="type a city…" value="New Delhi" />
+          <div class="ac-list" id="p1-place-list"></div>
+        </span>
       </label>
       <label class="coord">Lat <input id="p1-lat" type="number" step="0.0001" value="28.6139" /></label>
       <label class="coord">Lon <input id="p1-lon" type="number" step="0.0001" value="77.2090" /></label>
@@ -31,7 +34,6 @@
       <button id="save-btn" class="ghost">Save profile</button>
       <select id="load-profile" class="ghost"><option value="">Load saved…</option></select>
     </div>
-    <datalist id="city-list"></datalist>
   </section>
 
   <nav class="tabs" id="tabs">
@@ -69,7 +71,12 @@
           <label>Name <input id="p2-name" type="text" placeholder="optional" autocomplete="off" /></label>
           <label>Date of birth <input id="p2-date" type="date" value="1950-01-26" /></label>
           <label>Time of birth <input id="p2-time" type="time" value="08:00" /></label>
-          <label>Birthplace <input id="p2-place" type="text" list="city-list" value="New Delhi" /></label>
+          <label>Birthplace
+            <span class="ac-wrap">
+              <input id="p2-place" type="text" autocomplete="off" value="New Delhi" />
+              <div class="ac-list" id="p2-place-list"></div>
+            </span>
+          </label>
           <label class="coord">Lat <input id="p2-lat" type="number" step="0.0001" value="28.6139" /></label>
           <label class="coord">Lon <input id="p2-lon" type="number" step="0.0001" value="77.2090" /></label>
           <label class="coord">TZ <input id="p2-tz" type="number" step="0.5" value="5.5" /></label>

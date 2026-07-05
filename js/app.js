@@ -21,10 +21,35 @@
       tz: parseFloat($(pre + '-tz').value),
     };
   }
-  function bindPlace(pre) {
-    $(pre + '-place').addEventListener('input', (e) => {
-      const c = VA.CITIES.find((x) => x.name.toLowerCase() === e.target.value.trim().toLowerCase());
-      if (c) { $(pre + '-lat').value = c.lat; $(pre + '-lon').value = c.lon; $(pre + '-tz').value = 5.5; }
+  function setupAutocomplete(pre) {
+    const input = $(pre + '-place'), list = $(pre + '-place-list');
+    let items = [], active = -1;
+    const close = () => { list.classList.remove('open'); list.innerHTML = ''; items = []; active = -1; };
+    const apply = (c) => {
+      input.value = c.name;
+      $(pre + '-lat').value = c.lat; $(pre + '-lon').value = c.lon; $(pre + '-tz').value = 5.5;
+      close();
+    };
+    const paint = () => list.querySelectorAll('.ac-item').forEach((el, i) => el.classList.toggle('active', i === active));
+    const render = () => {
+      const q = input.value.trim().toLowerCase();
+      items = q ? VA.CITIES.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 8) : [];
+      if (!items.length) return close();
+      active = -1;
+      list.innerHTML = items.map((c, i) => `<div class="ac-item" data-i="${i}">${c.name}</div>`).join('');
+      list.classList.add('open');
+      list.querySelectorAll('.ac-item').forEach((el) =>
+        el.addEventListener('mousedown', (e) => { e.preventDefault(); apply(items[+el.dataset.i]); }));
+    };
+    input.addEventListener('input', render);
+    input.addEventListener('focus', () => { if (input.value.trim()) render(); });
+    input.addEventListener('blur', () => setTimeout(close, 120));
+    input.addEventListener('keydown', (e) => {
+      if (!list.classList.contains('open')) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, items.length - 1); paint(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); paint(); }
+      else if (e.key === 'Enter' && active >= 0) { e.preventDefault(); apply(items[active]); }
+      else if (e.key === 'Escape') { close(); }
     });
   }
 
@@ -241,8 +266,7 @@
   }
 
   function init() {
-    $('city-list').innerHTML = VA.CITIES.map((c) => `<option value="${c.name}">`).join('');
-    bindPlace('p1'); bindPlace('p2');
+    setupAutocomplete('p1'); setupAutocomplete('p2');
     renderVargaSeg();
     $('calc-btn').onclick = calc;
     $('match-btn').onclick = renderMatch;
