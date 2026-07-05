@@ -1,0 +1,56 @@
+/* cities.js — birthplace lookup (India-focused) with lat/lon. All IST (+5:30).
+ * Manual lat/lon entry is always available for anywhere not listed. */
+(function (root) {
+  const VA = (root.VA = root.VA || {});
+  // [name, lat, lon]
+  const C = [
+    ['Dhanbad, Jharkhand', 23.7957, 86.4304], ['Ranchi, Jharkhand', 23.3441, 85.3096],
+    ['Jamshedpur, Jharkhand', 22.8046, 86.2029], ['Bokaro, Jharkhand', 23.6693, 86.1511],
+    ['Deoghar, Jharkhand', 24.4823, 86.6968], ['Hazaribagh, Jharkhand', 23.9925, 85.3637],
+    ['Giridih, Jharkhand', 24.1913, 86.3000], ['Ramgarh, Jharkhand', 23.6307, 85.5613],
+    ['Chas, Jharkhand', 23.6333, 86.1667], ['Phusro, Jharkhand', 23.7667, 85.9833],
+    ['Medininagar, Jharkhand', 24.0333, 84.0667], ['Chaibasa, Jharkhand', 22.5500, 85.8000],
+    ['Kolkata, WB', 22.5726, 88.3639], ['Asansol, WB', 23.6839, 86.9753],
+    ['Durgapur, WB', 23.5204, 87.3119], ['Siliguri, WB', 26.7271, 88.3953],
+    ['Howrah, WB', 22.5958, 88.2636], ['Patna, Bihar', 25.5941, 85.1376],
+    ['Gaya, Bihar', 24.7955, 84.9994], ['Bhagalpur, Bihar', 25.2445, 86.9718],
+    ['Muzaffarpur, Bihar', 26.1209, 85.3647], ['Darbhanga, Bihar', 26.1542, 85.8918],
+    ['Purnia, Bihar', 25.7771, 87.4753], ['Delhi', 28.6139, 77.2090],
+    ['New Delhi', 28.6139, 77.2090], ['Noida, UP', 28.5355, 77.3910],
+    ['Ghaziabad, UP', 28.6692, 77.4538], ['Gurugram, Haryana', 28.4595, 77.0266],
+    ['Faridabad, Haryana', 28.4089, 77.3178], ['Mumbai, MH', 19.0760, 72.8777],
+    ['Pune, MH', 18.5204, 73.8567], ['Nagpur, MH', 21.1458, 79.0882],
+    ['Nashik, MH', 19.9975, 73.7898], ['Thane, MH', 19.2183, 72.9781],
+    ['Bengaluru, KA', 12.9716, 77.5946], ['Mysuru, KA', 12.2958, 76.6394],
+    ['Hubli, KA', 15.3647, 75.1240], ['Mangaluru, KA', 12.9141, 74.8560],
+    ['Chennai, TN', 13.0827, 80.2707], ['Coimbatore, TN', 11.0168, 76.9558],
+    ['Madurai, TN', 9.9252, 78.1198], ['Tiruchirappalli, TN', 10.7905, 78.7047],
+    ['Hyderabad, TS', 17.3850, 78.4867], ['Warangal, TS', 17.9689, 79.5941],
+    ['Visakhapatnam, AP', 17.6868, 83.2185], ['Vijayawada, AP', 16.5062, 80.6480],
+    ['Guntur, AP', 16.3067, 80.4365], ['Tirupati, AP', 13.6288, 79.4192],
+    ['Ahmedabad, GJ', 23.0225, 72.5714], ['Surat, GJ', 21.1702, 72.8311],
+    ['Vadodara, GJ', 22.3072, 73.1812], ['Rajkot, GJ', 22.3039, 70.8022],
+    ['Jaipur, RJ', 26.9124, 75.7873], ['Jodhpur, RJ', 26.2389, 73.0243],
+    ['Udaipur, RJ', 24.5854, 73.7125], ['Kota, RJ', 25.2138, 75.8648],
+    ['Ajmer, RJ', 26.4499, 74.6399], ['Lucknow, UP', 26.8467, 80.9462],
+    ['Kanpur, UP', 26.4499, 80.3319], ['Varanasi, UP', 25.3176, 82.9739],
+    ['Agra, UP', 27.1767, 78.0081], ['Prayagraj, UP', 25.4358, 81.8463],
+    ['Meerut, UP', 28.9845, 77.7064], ['Bareilly, UP', 28.3670, 79.4304],
+    ['Gorakhpur, UP', 26.7606, 83.3732], ['Bhopal, MP', 23.2599, 77.4126],
+    ['Indore, MP', 22.7196, 75.8577], ['Jabalpur, MP', 23.1815, 79.9864],
+    ['Gwalior, MP', 26.2183, 78.1828], ['Raipur, CG', 21.2514, 81.6296],
+    ['Bhilai, CG', 21.1938, 81.3509], ['Bilaspur, CG', 22.0797, 82.1409],
+    ['Bhubaneswar, Odisha', 20.2961, 85.8245], ['Cuttack, Odisha', 20.4625, 85.8830],
+    ['Rourkela, Odisha', 22.2604, 84.8536], ['Sambalpur, Odisha', 21.4669, 83.9756],
+    ['Chandigarh', 30.7333, 76.7794], ['Ludhiana, PB', 30.9010, 75.8573],
+    ['Amritsar, PB', 31.6340, 74.8723], ['Jalandhar, PB', 31.3260, 75.5762],
+    ['Thiruvananthapuram, KL', 8.5241, 76.9366], ['Kochi, KL', 9.9312, 76.2673],
+    ['Kozhikode, KL', 11.2588, 75.7804], ['Thrissur, KL', 10.5276, 76.2144],
+    ['Guwahati, Assam', 26.1445, 91.7362], ['Dibrugarh, Assam', 27.4728, 94.9120],
+    ['Dehradun, UK', 30.3165, 78.0322], ['Haridwar, UK', 29.9457, 78.1642],
+    ['Shimla, HP', 31.1048, 77.1734], ['Srinagar, JK', 34.0837, 74.7973],
+    ['Jammu, JK', 32.7266, 74.8570], ['Panaji, Goa', 15.4909, 73.8278],
+  ];
+  VA.CITIES = C.map(([name, lat, lon]) => ({ name, lat, lon }));
+  root.VA = VA;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
