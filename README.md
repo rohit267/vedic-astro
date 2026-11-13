@@ -18,6 +18,8 @@ computed live in your browser: no backend, no tracking, nothing ever leaves your
 - **Readings**: plain-spoken, honest interpretations, **each with a percentage** and a
   "Why" breakdown. A chart is treated as a *map of tendencies and seasons*, never a verdict.
 - **Strength tables**: seven classical balas per planet (virupas) and full Ashtakavarga.
+- **Installable, works offline**: add it to your home screen or desktop. After the first
+  visit it runs with no network, and picks up a new release on the visit after it ships.
 
 ## How the accuracy works
 
@@ -79,6 +81,9 @@ python3 -m http.server 8137
 
 ```
 index.html              page + tab structure
+manifest.webmanifest    app name, colours and icons for installing
+sw.js                   offline cache (serve cached, refresh in the background)
+icons/                  app icons
 styles.css              dark celestial theme, responsive
 vendor/astronomy…js     planetary ephemeris (MIT)
 vendor/fonts            Eczar and Mukta (SIL Open Font License), self-hosted

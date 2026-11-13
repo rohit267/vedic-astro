@@ -1,0 +1,15 @@
+{
+  "name": "Vedic Astro",
+  "short_name": "Vedic Astro",
+  "description": "Kundali, charts, dasha, matching and readings, worked out on your device.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#f9eec6",
+  "theme_color": "#f9eec6",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

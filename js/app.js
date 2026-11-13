@@ -323,6 +323,7 @@
       b.classList.add('active'); curStyle = b.dataset.style; renderCharts(); renderKundali();
     });
     calc();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');   // offline + installable
   }
   document.addEventListener('DOMContentLoaded', init);
 })();
