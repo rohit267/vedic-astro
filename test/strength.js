@@ -45,7 +45,17 @@ console.log('✅ Uccha and paksha bala hit 60 / 0 at exaltation, debilitation an
 // Historical time zone: India ran +6:30 war time in 1943
 assert.strictEqual(VA.zoneOffsetHours('Asia/Kolkata', 1943, 6, 1, 12, 0), 6.5);
 assert.strictEqual(VA.zoneOffsetHours('Asia/Kolkata', 1998, 7, 31, 23, 45), 5.5);
-console.log('✅ Historical time-zone offsets');
+require('../js/cities.js');
+const city = (n) => VA.CITIES.find((c) => c.name.startsWith(n));
+const offAt = (n, y, mo) => { const c = city(n); return VA.placeOffsetHours(c.zone, c.lon, c.lmtUntil, y, mo, 1, 12, 0); };
+assert.strictEqual(offAt('London', 1975, 7).hours, 1);                       // British Summer Time
+assert.strictEqual(offAt('New York City', 1990, 1).hours, -5);
+assert(Math.abs(offAt('Cork', 1910, 6).hours - -(25 + 21 / 60) / 60) < 1e-6); // Dublin Mean Time was Ireland's legal time
+assert(offAt('New York City', 1880, 1).lmt);                                  // before US standard time (Nov 1883)
+assert(Math.abs(offAt('New York City', 1880, 1).hours - city('New York City').lon / 15) < 1e-9);
+assert.strictEqual(VA.UNSURE_BEFORE[city('Reykjav').zone], 1970);             // browser lacks Iceland's pre-1970 rules
+assert.strictEqual(VA.CITIES.filter((c) => !c.zone || c.lmtUntil === undefined).length, 0);
+console.log('✅ Historical time-zone offsets, incl.', VA.CITIES.length, 'cities with zones and local-mean-time dates');
 
 // Every reading carries a percentage; exact birth time means 100% stable
 const demo = { year: 1947, month: 8, day: 15, hour: 0, minute: 0, ...DELHI };

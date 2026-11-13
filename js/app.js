@@ -22,12 +22,32 @@
       tz: parseFloat($(pre + '-tz').value),
     };
   }
-  // Listed cities are all in India: fill in the offset India actually kept on that date
-  // (e.g. +6:30 war time, 1942–45). IST starts in 1906; before that the field stays manual.
+  // For a listed city, fill in the offset its clocks actually kept on that date
+  // (daylight saving, India's +6:30 war time, local mean time before standard time).
   function autoTz(pre) {
-    const p = readPerson(pre);
-    if (!(p.year >= 1906) || isNaN(p.hour) || !VA.CITIES.some((c) => c.name === $(pre + '-place').value)) return;
-    $(pre + '-tz').value = +VA.zoneOffsetHours('Asia/Kolkata', p.year, p.month, p.day, p.hour, p.minute).toFixed(4);
+    const p = readPerson(pre), c = VA.CITIES.find((x) => x.name === $(pre + '-place').value);
+    const note = $(pre + '-tz-note');
+    note.hidden = true;
+    if (!c || !p.year) return;
+    const h = isNaN(p.hour) ? 12 : p.hour, m = isNaN(p.minute) ? 0 : p.minute;
+    const off = VA.placeOffsetHours(c.zone, c.lon, c.lmtUntil, p.year, p.month, p.day, h, m);
+    $(pre + '-tz').value = +off.hours.toFixed(4);
+    const until = VA.UNSURE_BEFORE[c.zone];
+    note.textContent = p.year < until ? `Clock rules for this place before ${until} aren't reliably known. Check the offset against the birth record.`
+      : off.lmt ? 'Before standard time: this is the local mean time of the town.' : '';
+    note.hidden = !note.textContent;
+  }
+  // Search ignores accents and case, and ranks name-start matches first ("par" finds Paris before Parbhani)
+  const fold = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const KEYS = new Map();
+  function searchCities(q) {
+    q = fold(q.trim());
+    if (!q) return [];
+    const rank = (c) => {
+      let k = KEYS.get(c); if (k === undefined) KEYS.set(c, (k = fold(c.name)));
+      return k.startsWith(q) ? 0 : k.includes(' ' + q) ? 1 : k.includes(q) ? 2 : 3;
+    };
+    return VA.CITIES.map((c) => [rank(c), c]).filter(([r]) => r < 3).sort((a, b) => a[0] - b[0]).slice(0, 8).map(([, c]) => c);
   }
   function setupAutocomplete(pre) {
     const input = $(pre + '-place'), list = $(pre + '-place-list');
@@ -35,13 +55,12 @@
     const close = () => { list.classList.remove('open'); list.innerHTML = ''; items = []; active = -1; };
     const apply = (c) => {
       input.value = c.name;
-      $(pre + '-lat').value = c.lat; $(pre + '-lon').value = c.lon; $(pre + '-tz').value = 5.5;
+      $(pre + '-lat').value = c.lat; $(pre + '-lon').value = c.lon;
       autoTz(pre); close();
     };
     const paint = () => list.querySelectorAll('.ac-item').forEach((el, i) => el.classList.toggle('active', i === active));
     const render = () => {
-      const q = input.value.trim().toLowerCase();
-      items = q ? VA.CITIES.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 8) : [];
+      items = searchCities(input.value);
       if (!items.length) return close();
       active = -1;
       list.innerHTML = items.map((c, i) => `<div class="ac-item" data-i="${i}">${c.name}</div>`).join('');

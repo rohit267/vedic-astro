@@ -68,6 +68,22 @@ node test/validate.js   # reproduces known charts + guna scores (15 checks)
 node test/smoke.js      # full-pipeline integration run
 ```
 
+## Birthplace and time zone
+
+Pick a city and the offset from UTC is filled in for that date: daylight saving,
+India's +6:30 war time, Ireland's Dublin Mean Time, and the town's own local mean time
+before its country adopted standard time (dates from the IANA tz database). Two limits
+are flagged under the field when they apply:
+
+- Browsers lack the pre-1970 clock history of 86 zones, among them the Netherlands,
+  Norway, Sweden, Denmark, Iceland and much of Africa.
+- Indian towns before 1906 kept assorted local times.
+
+In those cases check the offset against the birth record. Anywhere not listed works with
+manual latitude, longitude and offset.
+
+City data: [GeoNames](https://www.geonames.org/) (CC BY 4.0).
+
 ## Run locally
 
 No build step. Just serve the folder:
@@ -95,7 +111,7 @@ js/matching.js          Ashtakoota guna milan + doshas
 js/strength.js          planet balas, Ashtakavarga, house and dasha scores
 js/predictions.js       rule-based readings with percentages + birth-time stability
 js/charts.js            North / South / East SVG renderers
-js/cities.js            India birthplace lat/lon lookup
+js/cities.js            birthplaces: hand-made Indian list + 1,227 world cities with time zones
 js/app.js               UI wiring
 ```
 

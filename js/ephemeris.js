@@ -67,6 +67,15 @@
   }
   VA.zoneOffsetHours = zoneOffsetHours;
 
+  /* Offset for a birth at a place: the zone's legal time, except before the zone's first
+   * standard time (lmtUntil, YYYYMMDD from tzdb), when each town kept its own local mean
+   * time: lon / 15. */
+  function placeOffsetHours(zone, lonDeg, lmtUntil, y, mo, d, hh, mm) {
+    const lmt = y * 10000 + mo * 100 + d < lmtUntil;
+    return { hours: lmt ? lonDeg / 15 : zoneOffsetHours(zone, y, mo, d, hh, mm), lmt };
+  }
+  VA.placeOffsetHours = placeOffsetHours;
+
   // True obliquity of date (degrees)
   function obliquity(t) { return AE().e_tilt(t).tobl; }
 
