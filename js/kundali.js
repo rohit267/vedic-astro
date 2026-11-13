@@ -1,4 +1,4 @@
-/* kundali.js — assemble a full birth chart from birth data.
+/* kundali.js: assemble a full birth chart from birth data.
  * Depends on ephemeris.js + panchang.js. */
 (function (root) {
   const VA = (root.VA = root.VA || {});

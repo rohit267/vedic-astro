@@ -1,4 +1,4 @@
-/* ephemeris.js — sidereal planetary positions on top of astronomy-engine.
+/* ephemeris.js: sidereal planetary positions on top of astronomy-engine.
  * Raw positions come from astronomy-engine; the astrology-specific steps
  * (Lahiri ayanamsa, nutation removal, ascendant, midheaven, mean node) are ours
  * and are checked against Swiss Ephemeris in test/accuracy.js.
@@ -54,7 +54,7 @@
   VA.timeOf = (date) => AE().MakeTime(date);
 
   /* UTC offset (hours) a named zone used at a local wall-clock time, from the browser's
-   * own tz database — e.g. Asia/Kolkata was +6:30 (war time) from 1942 to 1945. */
+   * own tz database, e.g. Asia/Kolkata was +6:30 (war time) from 1942 to 1945. */
   function zoneOffsetHours(zone, y, mo, d, hh, mm) {
     const f = new Intl.DateTimeFormat('en-US', { timeZone: zone, hourCycle: 'h23', year: 'numeric',
       month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
@@ -88,7 +88,7 @@
   function siderealLon(body, t) { return toSidereal(tropLonOfDate(body, t), t); }
   VA.siderealLon = siderealLon;
 
-  // Rahu / Ketu — mean lunar node (both sidereal, degrees). Rahu is always retrograde.
+  // Rahu / Ketu: mean lunar node (both sidereal, degrees). Rahu is always retrograde.
   function rahuKetu(t) {
     const T = t.tt / 36525.0; // Julian centuries TT from J2000
     const om = 125.04452 - 1934.136261 * T + 0.0020708 * T * T + (T * T * T) / 450000;

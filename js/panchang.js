@@ -1,4 +1,4 @@
-/* panchang.js — the fixed Vedic tables and the decomposition of a sidereal
+/* panchang.js: the fixed Vedic tables and the decomposition of a sidereal
  * longitude into sign / nakshatra / pada, plus dignity, combustion and the
  * divisional-chart (varga) rules D1–D9. Pure data + arithmetic, no ephemeris. */
 (function (root) {

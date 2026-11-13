@@ -1,4 +1,4 @@
-/* strength.js — the arithmetic behind every percentage: seven classical balas per
+/* strength.js: the arithmetic behind every percentage: seven classical balas per
  * planet (in virupas), Ashtakavarga bindus, aspects, and the house / dasha scores
  * blended from them. Bala formulas and bindu tables follow Brihat Parashara Hora
  * Shastra; the blend weights (PLACE, OWNED, W) are this app's own judgement calls. */
@@ -143,11 +143,11 @@
       notes.push(`${p} ${here ? 'in it' : 'aspects it'} (${good ? '+' : '−'})`);
     }
     const factors = [
-      { label: `${lord}, the house lord — strength`, pct: strengthOf(chart, lord), w: W.lord },
-      { label: `Ashtakavarga — ${av.sav[sign]} of 56 bindus (28 is average)`, pct: av.sav[sign] / 56 * 100, w: W.bindus },
+      { label: `Strength of ${lord}, the house lord`, pct: strengthOf(chart, lord), w: W.lord },
+      { label: `Ashtakavarga: ${av.sav[sign]} of 56 bindus (28 is average)`, pct: av.sav[sign] / 56 * 100, w: W.bindus },
       { label: `Lord sits in the ${ordinal(lordHouse)} house`, pct: PLACE[lordHouse], w: W.placement },
       { label: notes.length ? notes.join(', ') : 'No planet occupies or aspects it', pct: clamp(influence), w: W.influence },
-      { label: `${karakas.join(' + ')}, the significator — strength`, pct: mean(karakas.map((k) => strengthOf(chart, k))), w: W.karaka },
+      { label: `Strength of ${karakas.join(' + ')}, the significator`, pct: mean(karakas.map((k) => strengthOf(chart, k))), w: W.karaka },
     ];
     return { pct: blend(factors), factors, lord, lordHouse, sign };
   }

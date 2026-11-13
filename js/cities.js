@@ -1,4 +1,4 @@
-/* cities.js — birthplace lookup (India-focused) with lat/lon. All IST (+5:30).
+/* cities.js: birthplace lookup (India-focused) with lat/lon. All IST (+5:30).
  * Manual lat/lon entry is always available for anywhere not listed. */
 (function (root) {
   const VA = (root.VA = root.VA || {});

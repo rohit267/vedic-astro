@@ -1,4 +1,4 @@
-/* matching.js — Ashtakoota Guna Milan (36 points) + Bhakoot/Nadi/Manglik doshas.
+/* matching.js: Ashtakoota Guna Milan (36 points) + Bhakoot/Nadi/Manglik doshas.
  * Ported verbatim from the Python engine cross-checked in conversation
  * (Magha/Leo → 12.5, Purva Phalguni/Leo → 24.5). */
 (function (root) {
@@ -93,7 +93,7 @@
   }
 
   /* Manglik / Mangal dosha. The standard verdict (and DrikPanchang's) is taken from
-   * Lagna and Chandra (Moon) — the two primary references. Shukra (Venus) is a
+   * Lagna and Chandra (Moon), the two primary references. Shukra (Venus) is a
    * secondary/regional reference. Mars in the SAME sign as the reference planet
    * (1st house = a conjunction) is not counted as a dosha in the standard verdict,
    * which is why Mars-conjunct-Venus does not make someone Manglik. */

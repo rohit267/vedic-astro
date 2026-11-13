@@ -1,4 +1,4 @@
-/* validate.js — headless accuracy check. Reproduces charts we verified by hand
+/* validate.js: headless accuracy check. Reproduces charts we verified by hand
  * (Rohit + the two candidate charts) and compares signs/nakshatras/degrees. */
 global.Astronomy = require('../vendor/astronomy.browser.min.js');
 require('../js/ephemeris.js');
@@ -20,7 +20,7 @@ function check(label, got, wantSign, wantNak, wantDeg, tol = 0.5) {
   ok ? pass++ : fail++;
 }
 
-console.log('\n========== ROHIT — 31 Jul 1998, 23:45 IST, Dhanbad ==========');
+console.log('\n========== ROHIT: 31 Jul 1998, 23:45 IST, Dhanbad ==========');
 const r = VA.computeChart({ year: 1998, month: 7, day: 31, hour: 23, minute: 45, ...DHANBAD, name: 'Rohit' });
 console.log(`  Ayanamsa: ${r.ayanamsa.toFixed(3)}°   Lagna: ${fmt(r.ascendant)}`);
 check('Lagna', r.ascendant, 'Aries', 'Bharani', null);
@@ -35,7 +35,7 @@ check('Rahu', r.planets.Rahu, 'Leo', null, 8.7, 1.0);
 check('Ketu', r.planets.Ketu, 'Aquarius', null, 8.7, 1.0);
 console.log(`  Jupiter dignity=${r.planets.Jupiter.dignity} retro=${r.planets.Jupiter.retro} | Saturn dignity=${r.planets.Saturn.dignity} | Merc retro=${r.planets.Mercury.retro}`);
 
-console.log('\n========== GIRL 1 — 26 May 2003, 19:32 IST, Dhanbad ==========');
+console.log('\n========== GIRL 1: 26 May 2003, 19:32 IST, Dhanbad ==========');
 const g1 = VA.computeChart({ year: 2003, month: 5, day: 26, hour: 19, minute: 32, ...DHANBAD });
 console.log(`  Lagna: ${fmt(g1.ascendant)}`);
 check('Moon', g1.planets.Moon, 'Pisces', 'Revati', null);
@@ -43,13 +43,13 @@ check('Mars', g1.planets.Mars, 'Capricorn', null, null); // exalted
 check('Jupiter', g1.planets.Jupiter, 'Cancer', null, null); // exalted
 console.log(`  Mars dignity=${g1.planets.Mars.dignity} | Jupiter dignity=${g1.planets.Jupiter.dignity} | Lagna sign=${g1.ascendant.sign}`);
 
-console.log('\n========== GIRL 2 — 20 Jul 2004, 09:00 IST, Dhanbad ==========');
+console.log('\n========== GIRL 2: 20 Jul 2004, 09:00 IST, Dhanbad ==========');
 const g2 = VA.computeChart({ year: 2004, month: 7, day: 20, hour: 9, minute: 0, ...DHANBAD });
 check('Moon(AM)', g2.planets.Moon, 'Leo', 'Magha', null);
 const g2e = VA.computeChart({ year: 2004, month: 7, day: 20, hour: 21, minute: 30, ...DHANBAD });
 console.log(`  Moon at 21:30 IST: ${fmt(g2e.planets.Moon)} (expect Magha pada 4)`);
 
-console.log('\n========== MATCHING — Rohit × Magha/Leo vs P.Phalguni/Leo ==========');
+console.log('\n========== MATCHING: Rohit × Magha/Leo vs P.Phalguni/Leo ==========');
 if (VA.gunaMilan) {
   const m1 = VA.gunaMilan(r.planets.Moon, g2.planets.Moon);
   console.log(`  Rohit (Libra/Swati) × girl (Leo/Magha): ${m1.total}/36  [expect 12.5]  ${Math.abs(m1.total - 12.5) < 0.01 ? '✅' : '❌'}`);

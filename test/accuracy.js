@@ -1,4 +1,4 @@
-/* accuracy.js — sidereal longitudes vs Swiss Ephemeris (test/reference.json:
+/* accuracy.js: sidereal longitudes vs Swiss Ephemeris (test/reference.json:
  * 400 random instants 1900–2100, Lahiri, generated with pyswisseph 2.10 in Moshier mode).
  * Prints the error in arc-seconds per body and fails if any exceeds its budget. */
 global.Astronomy = require('../vendor/astronomy.browser.min.js');

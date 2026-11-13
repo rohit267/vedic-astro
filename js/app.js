@@ -1,4 +1,4 @@
-/* app.js — UI wiring: forms, tabs, rendering, matching, saved profiles. */
+/* app.js: UI wiring: forms, tabs, rendering, matching, saved profiles. */
 (function () {
   const VA = window.VA;
   const $ = (id) => document.getElementById(id);
@@ -67,15 +67,15 @@
   function renderKundali() {
     const c = chart1, P = c.planets, S = VA.analyse(c).strength;
     const cur = dasha1.current;
-    const stat = (k, v) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`;
-    let html = `<div class="summary-row">
-      ${stat('Lagna', `${c.ascendant.sign} ${fmtDeg(c.ascendant.signDeg)}`)}
-      ${stat('Moon (Rashi)', `${P.Moon.sign} · ${P.Moon.nakshatra}-${P.Moon.pada}`)}
-      ${stat('Sun', `${P.Sun.sign}`)}
-      ${stat('Now running', `${cur.md.lord} › ${cur.ad.lord}`)}
-      ${stat('Ayanamsa', `${c.ayanamsa.toFixed(4)}° Lahiri`)}
-    </div>`;
-    html += `<div class="card"><table class="grid"><thead><tr>
+    const fact = (k, v, wide) => `<div class="${wide ? 'wide' : ''}"><dt>${k}</dt><dd>${v}</dd></div>`;
+    let html = `<div class="hero"><div id="hero-chart"></div><dl class="facts">
+      ${fact('Lagna (rising sign)', `${c.ascendant.sign} ${fmtDeg(c.ascendant.signDeg)}`)}
+      ${fact('Sun', `${P.Sun.sign} ${fmtDeg(P.Sun.signDeg)}`)}
+      ${fact('Moon sign and nakshatra', `${P.Moon.sign}, ${P.Moon.nakshatra} pada ${P.Moon.pada}`, true)}
+      ${fact('Dasha running now', `${cur.md.lord}, then ${cur.ad.lord} until ${fmtMY(cur.ad.endMs)}`, true)}
+      ${fact('Lahiri ayanamsa', `${c.ayanamsa.toFixed(4)}°`)}
+    </dl></div>`;
+    html += `<div class="card scroll"><table class="grid"><thead><tr>
       <th>Planet</th><th>Sign</th><th>Degree</th><th>Nakshatra (Pada)</th><th>House</th><th>Strength</th><th>State</th></tr></thead><tbody>`;
     for (const p of VA.PLANETS) {
       const pl = P[p];
@@ -87,26 +87,27 @@
       if (pl.combust) tags.push('<span class="pill comb">Combust</span>');
       html += `<tr><td><b>${p}</b></td><td>${pl.sign}</td><td>${fmtDeg(pl.signDeg)}</td>
         <td>${pl.nakshatra} (${pl.pada})</td><td>${pl.house}</td>
-        <td>${S[p] ? `<span class="pct ${VA.scoreTone('planet', S[p].pct)}">${pct(S[p].pct)}</span>` : '—'}</td><td>${tags.join(' ') || '—'}</td></tr>`;
+        <td>${S[p] ? `<span class="pct ${VA.scoreTone('planet', S[p].pct)}">${pct(S[p].pct)}</span>` : '-'}</td><td>${tags.join(' ') || '-'}</td></tr>`;
     }
     html += `</tbody></table></div>`;
     html += strengthPanel(c);
     html += manglikPanel(c);
     $('tab-kundali').innerHTML = html;
+    VA.renderChart($('hero-chart'), c, 'LAGNA', curStyle);
   }
 
   // The raw numbers every percentage is built from
   function strengthPanel(chart) {
     const { strength, av } = VA.analyse(chart), keys = Object.keys(VA.STRENGTH_MAX);
     const total = keys.reduce((a, k) => a + VA.STRENGTH_MAX[k], 0);
-    let h = `<details class="card"><summary>Planet strength — seven classical balas, in virupas</summary>
+    let h = `<details class="card"><summary>Planet strength: seven classical balas, in virupas</summary>
       <div class="scroll"><table class="grid num"><thead><tr><th>Planet</th>${keys.map((k) => `<th>${k}<br/><span class="hint">/${VA.STRENGTH_MAX[k]}</span></th>`).join('')}<th>Total<br/><span class="hint">/${total}</span></th><th>%</th></tr></thead><tbody>`;
     for (const p of VA.SEVEN) {
       h += `<tr><td><b>${p}</b></td>${keys.map((k) => `<td>${strength[p].parts[k].toFixed(1)}</td>`).join('')}
         <td><b>${strength[p].total.toFixed(1)}</b></td><td>${pct(strength[p].pct)}</td></tr>`;
     }
     h += `</tbody></table></div><p class="hint">Uccha = distance from deep debilitation · rasi / navamsa = dignity in D1 / D9 · kendra = angular house · dig = directional · paksha = lunar phase · cheshta = motion. Rahu and Ketu act through the lord of their sign.</p></details>`;
-    h += `<details class="card"><summary>Ashtakavarga — bindus per sign</summary>
+    h += `<details class="card"><summary>Ashtakavarga: bindus per sign</summary>
       <div class="scroll"><table class="grid num"><thead><tr><th></th>${VA.SIGN_SHORT.map((s, i) => `<th>${s}${i === chart.lagnaSign ? '<br/><span class="hint">Lagna</span>' : ''}</th>`).join('')}</tr></thead><tbody>`;
     for (const p of VA.SEVEN) h += `<tr><td><b>${p}</b></td>${av.bav[p].map((b) => `<td class="${b >= 5 ? 'g' : b <= 3 ? 'b' : ''}">${b}</td>`).join('')}</tr>`;
     h += `<tr><td><b>All (SAV)</b></td>${av.sav.map((b) => `<td class="${b >= 30 ? 'g' : b < 25 ? 'b' : ''}"><b>${b}</b></td>`).join('')}</tr>`;
@@ -119,14 +120,14 @@
     const rows = m.references.map((r) => {
       let st;
       if (r.manglik) st = `<span class="pill de">Manglik · ${VA.ordinal(r.house)}</span>`;
-      else if (r.conjunct) st = `Mars conjunct <span class="pill own">1st</span> <span class="hint">(conjunction — not a dosha)</span>`;
+      else if (r.conjunct) st = `Mars conjunct <span class="pill own">1st</span> <span class="hint">(conjunction, not a dosha)</span>`;
       else st = `<span class="pill ex">clear · ${VA.ordinal(r.house)}</span>`;
       return `<tr><td><b>${r.label}</b>${r.primary ? '' : ' <span class="hint">(secondary)</span>'}</td><td>${st}</td></tr>`;
     }).join('');
     const verdict = m.isManglik
-      ? `Manglik${m.marsDignity === 'Debilitated' ? ' — but Mars is debilitated (weak), so it is mild' : ''}`
+      ? `Manglik${m.marsDignity === 'Debilitated' ? ', but Mars is debilitated (weak), so it is mild' : ''}`
       : 'Non-Manglik';
-    return `<div class="card"><h3>🔥 Mangal (Manglik) status — Lagna · Chandra · Shukra</h3>
+    return `<div class="card"><h3>Mangal (Manglik) status</h3>
       <table class="grid"><thead><tr><th>Reference chart</th><th>Mars position</th></tr></thead><tbody>${rows}</tbody></table>
       <div class="dosha-note" style="border-left:3px solid var(--${m.isManglik ? 'warn' : 'good'})">
       <b>Overall: ${verdict}.</b> The standard verdict is read from Lagna &amp; Chandra (Moon); Shukra (Venus) is a secondary reference, and Mars conjunct Venus is not counted as a dosha.</div></div>`;
@@ -192,16 +193,16 @@
     const mdL = dasha1.current.md.lord, adL = dasha1.current.ad.lord, nowScore = VA.periodScore(c, mdL, adL).pct;
 
     let html = `<div class="card"><h3>Your current season</h3>`;
-    html += `<p>You are in a <b>${mdL}</b> Mahadasha — ${TONE[mdL]} — with <b>${adL}</b> running inside it (${TONE[adL]}).
+    html += `<p>You are in a <b>${mdL}</b> Mahadasha (${TONE[mdL]}), with <b>${adL}</b> running inside it (${TONE[adL]}).
       For this chart that scores <span class="pct ${VA.scoreTone('period', nowScore)}">${pct(nowScore)}</span> favourable.</p>`;
     html += `<div class="dosha-note" style="border-left:3px solid var(--${ss.active ? 'warn' : 'good'})">
-      <b>Sade Sati:</b> ${ss.active ? `Active — Saturn is in ${VA.SIGNS[ss.sign]}, the ${ss.phase} from your Moon, holding ${ss.bindus} of 8 bindus there: pressure <b>${pct((8 - ss.bindus) / 8 * 100)}</b>. A heavy but maturing ~2.5-year stretch; go steady.` : `Not active right now — Saturn is in ${VA.SIGNS[ss.sign]}, the ${VA.ordinal(ss.fromMoon)} from your Moon.`}</div>`;
+      <b>Sade Sati:</b> ${ss.active ? `Active: Saturn is in ${VA.SIGNS[ss.sign]}, the ${ss.phase} from your Moon, holding ${ss.bindus} of 8 bindus there: pressure <b>${pct((8 - ss.bindus) / 8 * 100)}</b>. A heavy but maturing ~2.5-year stretch; go steady.` : `Not active right now: Saturn is in ${VA.SIGNS[ss.sign]}, the ${VA.ordinal(ss.fromMoon)} from your Moon.`}</div>`;
     html += `<div class="dosha-note" style="border-left:3px solid var(--${mang.isManglik ? 'warn' : 'good'})">
-      <b>Manglik:</b> ${mang.isManglik ? `Yes — flagged from ${mang.flaggedFrom.join(', ')}.${mang.marsDignity === 'Debilitated' ? ' Mars is debilitated (weak), which softens it.' : ''}` : 'No — Mars is clear of the sensitive houses.'}</div>`;
+      <b>Manglik:</b> ${mang.isManglik ? `Yes: flagged from ${mang.flaggedFrom.join(', ')}.${mang.marsDignity === 'Debilitated' ? ' Mars is debilitated (weak), which softens it.' : ''}` : 'No: Mars is clear of the sensitive houses.'}</div>`;
     html += `</div>`;
 
     // Upcoming antardashas across current + next maha, with tone
-    html += `<div class="card"><h3>Periods ahead — how favourable each is for this chart</h3><div class="dasha-list">`;
+    html += `<div class="card"><h3>Periods ahead: how favourable each is for this chart</h3><div class="dasha-list">`;
     const upcoming = [];
     const idx = dasha1.maha.indexOf(dasha1.current.md);
     [dasha1.maha[idx], dasha1.maha[idx + 1]].filter(Boolean).forEach((md) => {
@@ -221,16 +222,17 @@
   /* ---------- READINGS ---------- */
   function claimHTML(i) {
     // Scored readings lead with the score; plain facts lead with how certain the birth time makes them
-    const head = i.pct != null
-      ? `<span class="pct ${i.tone}">${pct(i.pct)}</span> <span class="pct-label">${i.label}</span><span class="stable">birth-time stable ${pct(i.stable)}</span>`
-      : `<span class="pct ${i.stable >= 90 ? 'good' : 'warn'}">${pct(i.stable)}</span> <span class="pct-label">certain for this birth time</span>`;
+    const scored = i.pct != null, n = Math.round(scored ? i.pct : i.stable);
+    const head = `<span class="num">${n}<i>%</i></span><span class="bar"><span style="width:${n}%"></span></span>`
+      + (scored ? `<span class="what">${i.label}</span><span class="stable">birth-time stable ${pct(i.stable)}</span>`
+        : `<span class="what">certain</span><span class="stable">for this birth time</span>`);
     const why = !i.factors ? '' : `<details><summary>Why ${pct(i.pct)}</summary><table class="grid why"><tbody>${i.factors.map((f) =>
       `<tr><td>${f.label}</td><td>${pct(f.pct)}</td><td class="hint">${f.w ? 'weight ' + f.w : ''}</td></tr>`).join('')}</tbody></table></details>`;
-    return `<div class="claim ${i.tone || ''}"><div class="claim-head">${head}</div><p>${mdBold(i.text)}</p>${why}</div>`;
+    return `<div class="claim ${i.tone || ''}"><div class="claim-head">${head}</div><div><p>${mdBold(i.text)}</p>${why}</div></div>`;
   }
   function renderReading() {
     $('tab-reading').innerHTML = sections1.map((s) =>
-      `<div class="reading-sec"><h3>${s.icon} ${s.title}</h3>${s.items.map(claimHTML).join('')}${s.note ? `<p class="hint">${mdBold(s.note)}</p>` : ''}</div>`).join('');
+      `<div class="reading-sec"><h3>${s.title}</h3>${s.items.map(claimHTML).join('')}${s.note ? `<p class="hint">${mdBold(s.note)}</p>` : ''}</div>`).join('');
   }
 
   /* ---------- MATCHING ---------- */
@@ -242,8 +244,8 @@
     const n1 = (readPerson('p1').name || 'Person 1'), n2 = (inp2.name || 'Person 2');
     const eff = m.doshas.nadiCancellable ? m.totalWithNadiCancel : m.total;
     const verdictText = eff >= 18
-      ? 'On paper this clears the usual family threshold. But paper isn\'t the marriage — meeting and talking is.'
-      : 'On paper this is on the lower side. That doesn\'t doom anything — a low score often just means two Moon-signs that differ, and cancellable doshas. The real test is how you actually feel together.';
+      ? 'On paper this clears the usual family threshold. But paper isn\'t the marriage. Meeting and talking is.'
+      : 'On paper this is on the lower side. That doesn\'t doom anything: a low score often just means two Moon-signs that differ, and cancellable doshas. The real test is how you actually feel together.';
 
     let html = `<div class="verdict card">
       <div class="score">${m.total}<span class="of"> / 36 · ${pct(m.total / 36 * 100)}</span></div>
@@ -260,9 +262,9 @@
     // doshas
     const mA = VA.manglik(chart1), mB = VA.manglik(c2);
     html += `<div class="card"><h3>Doshas</h3>`;
-    html += `<div class="dosha-note">${m.doshas.bhakoot ? '⚠️ <b>Bhakoot dosha</b> present (2/12, 5/9 or 6/8 between Moons) — a family/longevity caution.' : '✅ <b>Bhakoot</b> clean — good for family harmony & longevity.'}</div>`;
-    html += `<div class="dosha-note">${m.doshas.nadi ? (m.doshas.nadiCancellable ? '⚠️ <b>Nadi dosha</b> (same nadi) — but <b>cancellable</b> here (different nakshatra, sign & star-lord).' : '⚠️ <b>Nadi dosha</b> (same nadi) — not clearly cancellable; ask a senior astrologer.') : '✅ <b>Nadi</b> clean.'}</div>`;
-    html += `<div class="dosha-note"><b>Manglik:</b> ${n1} — ${mA.isManglik ? 'yes' + (mA.marsDignity === 'Debilitated' ? ' (weak Mars)' : '') : 'no'}; ${n2} — ${mB.isManglik ? 'yes' + (mB.marsDignity === 'Debilitated' ? ' (weak Mars)' : '') : 'no'}. ${mA.isManglik === mB.isManglik ? (mA.isManglik ? 'Both Manglik — that mutually cancels.' : 'Neither Manglik — clean.') : 'One is Manglik and the other isn\'t — the classic point families raise; a debilitated/weak Mars makes it mild.'}</div>`;
+    html += `<div class="dosha-note">${m.doshas.bhakoot ? '⚠️ <b>Bhakoot dosha</b> present (2/12, 5/9 or 6/8 between Moons), a family/longevity caution.' : '✅ <b>Bhakoot</b> clean, good for family harmony & longevity.'}</div>`;
+    html += `<div class="dosha-note">${m.doshas.nadi ? (m.doshas.nadiCancellable ? '⚠️ <b>Nadi dosha</b> (same nadi), but <b>cancellable</b> here (different nakshatra, sign & star-lord).' : '⚠️ <b>Nadi dosha</b> (same nadi), not clearly cancellable; ask a senior astrologer.') : '✅ <b>Nadi</b> clean.'}</div>`;
+    html += `<div class="dosha-note"><b>Manglik:</b> ${n1}: ${mA.isManglik ? 'yes' + (mA.marsDignity === 'Debilitated' ? ' (weak Mars)' : '') : 'no'}; ${n2}: ${mB.isManglik ? 'yes' + (mB.marsDignity === 'Debilitated' ? ' (weak Mars)' : '') : 'no'}. ${mA.isManglik === mB.isManglik ? (mA.isManglik ? 'Both Manglik: that mutually cancels.' : 'Neither Manglik: clean.') : 'One is Manglik and the other isn\'t: the classic point families raise; a debilitated/weak Mars makes it mild.'}</div>`;
     html += `</div>`;
     html += `<div class="card"><h3>Honest read</h3><p>${verdictText}</p></div>`;
     $('match-result').innerHTML = html;
@@ -318,7 +320,7 @@
     // style seg
     $('style-seg').querySelectorAll('button').forEach((b) => b.onclick = () => {
       $('style-seg').querySelectorAll('button').forEach((x) => x.classList.remove('active'));
-      b.classList.add('active'); curStyle = b.dataset.style; renderCharts();
+      b.classList.add('active'); curStyle = b.dataset.style; renderCharts(); renderKundali();
     });
     calc();
   }

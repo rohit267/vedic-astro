@@ -1,23 +1,23 @@
 # ✦ Vedic Astro
 
 A private, **front-end-only** Vedic (sidereal) astrology calculator. Everything is
-computed live in your browser — no backend, no tracking, nothing ever leaves your device.
+computed live in your browser: no backend, no tracking, nothing ever leaves your device.
 
 **Live:** https://rohit267.github.io/vedic-astro/
 
 ## Features
 
-- **Kundali** — full birth chart: every planet's sign, degree, nakshatra + pada, house,
+- **Kundali**: full birth chart: every planet's sign, degree, nakshatra + pada, house,
   and state (exalted / debilitated / own / retrograde / combust).
-- **Charts D1–D9** — Rashi (D1), Hora (D2), Drekkana (D3), Chaturthamsa (D4),
+- **Charts D1–D9**: Rashi (D1), Hora (D2), Drekkana (D3), Chaturthamsa (D4),
   Saptamsa (D7) and Navamsa (D9), each drawn in **North / South / East** style (toggle).
-- **Dasha** — Vimshottari Mahā → Antar → Pratyantar, with the current period highlighted.
-- **Good / Bad times** — Sade Sati status, Manglik check, and the flavour of the periods ahead.
-- **Matching** — full 36-guna Ashtakoota (Guna Milan) with Bhakoot / Nadi / Manglik doshas
+- **Dasha**: Vimshottari Mahā → Antar → Pratyantar, with the current period highlighted.
+- **Timing**: Sade Sati status, Manglik check, and the flavour of the periods ahead.
+- **Matching**: full 36-guna Ashtakoota (Guna Milan) with Bhakoot / Nadi / Manglik doshas
   and their cancellation rules.
-- **Readings** — plain-spoken, honest interpretations, **each with a percentage** and a
+- **Readings**: plain-spoken, honest interpretations, **each with a percentage** and a
   "Why" breakdown. A chart is treated as a *map of tendencies and seasons*, never a verdict.
-- **Strength tables** — seven classical balas per planet (virupas) and full Ashtakavarga.
+- **Strength tables**: seven classical balas per planet (virupas) and full Ashtakavarga.
 
 ## How the accuracy works
 
@@ -81,6 +81,7 @@ python3 -m http.server 8137
 index.html              page + tab structure
 styles.css              dark celestial theme, responsive
 vendor/astronomy…js     planetary ephemeris (MIT)
+vendor/fonts            Eczar and Mukta (SIL Open Font License), self-hosted
 js/ephemeris.js         sidereal longitudes, ayanamsa, ascendant, midheaven, nodes, ΔT
 js/panchang.js          signs/nakshatras, dignity, combustion, varga rules D1–D9
 js/kundali.js           assemble a full chart
@@ -96,5 +97,5 @@ js/app.js               UI wiring
 ## A note
 
 Sidereal · Lahiri ayanamsa · whole-sign houses. This is a tool for reflection and for the
-family-side matching process — not a source of destiny. Read it, use the timing, then drive
+family-side matching process, not a source of destiny. Read it, use the timing, then drive
 your own life.

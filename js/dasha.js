@@ -1,4 +1,4 @@
-/* dasha.js — Vimshottari Dasha (Maha → Antar → Pratyantar), seeded from the
+/* dasha.js: Vimshottari Dasha (Maha → Antar → Pratyantar), seeded from the
  * Moon's nakshatra. 120-year cycle. Validated: Rohit → Saturn MD 2018–2037. */
 (function (root) {
   const VA = (root.VA = root.VA || {});

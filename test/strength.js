@@ -1,4 +1,4 @@
-/* strength.js — self-check for the percentage engine: table checksums, bala formulas
+/* strength.js: self-check for the percentage engine: table checksums, bala formulas
  * at known astronomical moments, ranges over 400 random charts, and stability. */
 const assert = require('assert');
 global.Astronomy = require('../vendor/astronomy.browser.min.js');
