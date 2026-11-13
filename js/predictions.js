@@ -158,29 +158,31 @@
           low: 'Work is quiet; use the time to learn, plan or clear the backlog.' },
         money: { high: 'Money comes in more easily, a good time for deals and for collecting what you are owed.',
           mid: 'Money is steady; stick to your budget and it holds.',
-          low: 'Income is slow this month, so keep spending tight.' },
-        love: { high: 'Love is warm and easy: a good month for time together, and for talk of marriage if that is on your mind.',
+          low: 'Income is slow, so keep spending tight.' },
+        love: { high: 'Love is warm and easy: a good time to be together, and for talk of marriage if that is on your mind.',
           mid: 'Relationships are steady, and small gestures go a long way.',
           low: 'Relationships need patience; avoid picking fights over small things.' },
-        home: { high: 'Home life is happy, and it is a good month for property, a move or news about children.',
+        home: { high: 'Home life is happy, and it is a good time for property, a move or news about children.',
           mid: 'Home is calm and gives you a place to recharge.',
           low: 'Home may feel busy or tense, so make time for the family.' },
         health: { high: 'Health needs care: rest well, eat on time and do not ignore small symptoms.',
           mid: 'Keep up your sleep and exercise and your energy holds.',
-          low: 'Energy is good, a month to get active.' },
+          low: 'Energy is good, a time to get active.' },
       };
       const LOSS = 'Watch your spending, and avoid lending money or signing guarantees.';
       const ELDERS = 'Elders in the family may need your time and care.';
       const SUN = { true: 'You feel more confident and visible, so speak up.', false: 'Keep a low profile with bosses and officials, and pace yourself.' };
-      const OPENER = { good: 'A strong month overall, with more going for you than against you.',
-        warn: 'A mixed month: some doors open, others need patience.',
-        bad: 'A month to take carefully: more is pushing against you than for you.' };
+      const OPENER = { good: 'A strong stretch overall, with more going for you than against you.',
+        warn: 'A mixed stretch: some doors open, others need patience.',
+        bad: 'A stretch to take carefully: more is pushing against you than for you.' };
       const NAME = Object.fromEntries(VA.LIFE_EVENTS.map((e) => [e.key, e.name]));
-      sec('🗓️', 'The next 12 months', VA.monthsAhead(chart, dasha, now).map((m) => {
+      const day = (ms) => new Date(ms).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+      const monthName = (ms) => new Date(ms).toLocaleDateString('en-IN', { month: 'long', timeZone: 'UTC' });
+      sec('🗓️', 'The next 12 months, period by period', VA.dashaAhead(chart, dasha, now).map((m, n) => {
         const tone = m.good - m.bad >= 15 ? 'good' : m.bad - m.good >= 15 ? 'bad' : 'warn';
-        const words = [OPENER[tone], SUN[m.sunGood]];
-        if (m.change === 'ad') words.push('A bigger new chapter starts this month, so expect a change of pace.');
-        if (m.change === 'pd') words.push('A new phase starts this month.');
+        const words = [OPENER[tone], SUN[m.sunShare >= 0.5]];
+        if (m.newChapter) words.push('This starts a bigger new chapter, so expect a change of pace.');
+        if (m.best && m.best.good - m.good >= 8) words.push(`The best part is around ${monthName(m.best.ms)}.`);
         const life = [];
         if (has(m, 'career')) life.push(LINES.work[lvl(max(m, 'career'), 0.35, 0.18)]);
         if (has(m, 'money')) life.push(LINES.money[lvl(max(m, 'money'), 0.35, 0.18)]);
@@ -189,16 +191,15 @@
         if (has(m, 'health')) life.push(LINES.health[lvl(max(m, 'health'), 0.42, 0.25)]);
         if (max(m, 'loss') >= 0.42) life.push(LOSS);
         if (max(m, 'family') >= 0.42) life.push(ELDERS);
-        const name = new Date(m.start).toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-        const it = item('month-' + m.start, `${tone}-${Math.round(m.good / 20)}-${Math.round(m.bad / 20)}`,
-          `**${name}.** ${words.join(' ')}\n${life.join(' ')}`, m.good, 'good', [
-            { label: `Running period: ${m.md}–${m.ad}–${m.pd}`, pct: m.good },
-            ...Object.entries(m.areas).map(([k, v]) => ({ label: `${NAME[k]}: how active this month`, pct: v * 100 })),
-            { label: `Sun's monthly transit from your Moon: ${m.sunGood ? 'helpful' : 'unhelpful'}`, pct: m.sunGood ? 100 : 0 },
+        // id by position, not start time: a shifted birth time moves period edges by minutes
+        const it = item('dasha-' + n, `${m.md}-${m.ad}-${m.pd}-${tone}`,
+          `**${day(m.start)} to ${day(m.end)}** (${m.md}–${m.ad}–${m.pd} period). ${words.join(' ')}\n${life.join(' ')}`, m.good, 'good', [
+            ...Object.entries(m.areas).map(([k, v]) => ({ label: `${NAME[k]}: how active in this period`, pct: v * 100 })),
+            { label: 'Share of this period the Sun\'s monthly transit helps', pct: m.sunShare * 100 },
           ], tone);
         it.bad = m.bad;
         return it;
-      }), 'Each month blends the dasha running down to its smallest sub-period, Jupiter, Saturn and Rahu in transit, and the Sun\'s monthly move. **Good** is how strongly the good areas are lit up that month, **bad** how strongly the difficult ones are.');
+      }), 'One entry per dasha period (main, sub and smallest sub-period), averaged month by month with Jupiter, Saturn and Rahu in transit and the Sun\'s monthly move. **Good** is how strongly the good areas are lit up, **bad** how strongly the difficult ones are.');
 
     }
 

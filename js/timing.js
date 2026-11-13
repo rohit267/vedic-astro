@@ -99,39 +99,50 @@
     return out;
   }
 
-  /* The next 12 months: for each month, how active each life area is (dasha down to the
-   * pratyantar x transit), plus the Sun's monthly transit from the Moon (good in the 3rd,
-   * 6th, 10th and 11th). good / bad = the two strongest good areas / the strongest
-   * difficult one, scaled so 0.6 activity reads as 100%, nudged 8 points by the Sun. */
-  function monthsAhead(chart, dasha, now, n = 12) {
-    const birth = VA.birthMs(chart.input);
+  /* How active each life area is at one moment under given dasha lords (maha, antar,
+   * pratyantar), plus whether the Sun's monthly transit from the Moon helps (3rd, 6th,
+   * 10th, 11th). Marriage and children keep their age windows; the rest count at any age. */
+  function assess(chart, lords, ms) {
+    const age = (ms - VA.birthMs(chart.input)) / YEAR, areas = {};
+    for (const e of EVENTS) {
+      if ((e.key === 'marriage' || e.key === 'children') && (age < e.ages[0] || age > e.ages[1])) continue;
+      const d = Math.max(0.03, 0.25 * tie(chart, lords[0], e) + 0.35 * tie(chart, lords[1], e) + 0.4 * tie(chart, lords[2], e));
+      areas[e.key] = d * (0.25 + 0.75 * transitLevel(chart, e, ms));
+    }
+    const sunHouse = ((Math.floor(VA.siderealLon('Sun', VA.timeOf(new Date(ms))) / 30) - chart.planets.Moon.signIdx + 12) % 12) + 1;
+    return { areas, sunGood: [3, 6, 10, 11].includes(sunHouse) };
+  }
+  // good = two strongest good areas, bad = strongest difficult one; 0.6 activity reads as
+  // 100%, nudged up to 8 points by the share of time the Sun's transit helps
+  function score(areas, sunShare) {
+    const vals = (bad) => EVENTS.filter((e) => !!e.bad === bad && e.key in areas).map((e) => areas[e.key]).sort((x, y) => y - x);
+    const pctOf = (v, nudge) => Math.round(Math.max(0, Math.min(100, v / 0.6 * 100 + nudge)));
+    const g = vals(false), b = vals(true), nudge = 16 * sunShare - 8;
+    return { good: pctOf(((g[0] || 0) + (g[1] || 0)) / 2, nudge), bad: pctOf(b[0] || 0, -nudge) };
+  }
+
+  /* The months ahead, one entry per pratyantar (smallest dasha period), sampled once a
+   * month inside it and averaged. best = its strongest month when it runs 3+ months. */
+  function dashaAhead(chart, dasha, now, months = 12) {
+    const stop = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + months, now.getUTCDate());
     const out = [];
-    for (let i = 0; i < n; i++) {
-      const y = now.getUTCFullYear(), m = now.getUTCMonth() + i;
-      const start = Date.UTC(y, m, 1), end = Date.UTC(y, m + 1, 1), mid = (start + end) / 2;
-      const per = VA.periodAt(dasha, mid);
+    for (let t = now.getTime(); t < stop;) {
+      const per = VA.periodAt(dasha, t);
       if (!per) break;
-      const age = (mid - birth) / YEAR, areas = {};
-      for (const e of EVENTS) {
-        // marriage and children keep their age windows; the rest matter every month at any age
-        if ((e.key === 'marriage' || e.key === 'children') && (age < e.ages[0] || age > e.ages[1])) continue;
-        const d = Math.max(0.03, 0.25 * tie(chart, per.md.lord, e) + 0.35 * tie(chart, per.ad.lord, e) + 0.4 * tie(chart, per.pd.lord, e));
-        areas[e.key] = d * (0.25 + 0.75 * transitLevel(chart, e, mid));
-      }
-      const vals = (bad) => EVENTS.filter((e) => !!e.bad === bad && e.key in areas).map((e) => areas[e.key]).sort((x, y) => y - x);
-      const sunHouse = ((Math.floor(VA.siderealLon('Sun', VA.timeOf(new Date(mid))) / 30) - chart.planets.Moon.signIdx + 12) % 12) + 1;
-      const sunGood = [3, 6, 10, 11].includes(sunHouse);
-      const pctOf = (v, nudge) => Math.round(Math.max(0, Math.min(100, v / 0.6 * 100 + nudge)));
-      const gv = vals(false), bv = vals(true);
-      const good = pctOf(((gv[0] || 0) + (gv[1] || 0)) / 2, sunGood ? 8 : -8), bad = pctOf(bv[0] || 0, sunGood ? -8 : 8);
-      // a sub-period (ad) or sub-sub-period (pd) boundary inside this month
-      const a = VA.periodAt(dasha, start), b = VA.periodAt(dasha, end - 1);
-      const change = a && b && a.ad !== b.ad ? 'ad' : a && b && a.pd !== b.pd ? 'pd' : '';
-      out.push({ start, end, md: per.md.lord, ad: per.ad.lord, pd: per.pd.lord, areas, sunGood, good, bad, change });
+      const a = t, b = Math.min(per.pd.endMs, stop), n = Math.max(1, Math.round((b - a) / MONTH));
+      const lords = [per.md.lord, per.ad.lord, per.pd.lord];
+      const samples = Array.from({ length: n }, (_, i) => a + (i + 0.5) * (b - a) / n).map((ms) => ({ ms, ...assess(chart, lords, ms) }));
+      const areas = {};
+      for (const k of Object.keys(samples[0].areas)) areas[k] = samples.reduce((x, s) => x + (s.areas[k] || 0), 0) / n;
+      const sunShare = samples.filter((s) => s.sunGood).length / n;
+      const best = n >= 3 ? samples.map((s) => ({ ms: s.ms, good: score(s.areas, s.sunGood ? 1 : 0).good })).sort((x, y) => y.good - x.good)[0] : null;
+      out.push({ start: a, end: b, md: lords[0], ad: lords[1], pd: lords[2], areas, sunShare, ...score(areas, sunShare), best,
+        newChapter: per.ad.startMs >= now.getTime() && per.pd.startMs === per.ad.startMs });
+      t = b;
     }
     return out;
   }
 
-  Object.assign(VA, { LIFE_EVENTS: EVENTS, eventTiming, eventTie: tie, monthsAhead });
+  Object.assign(VA, { LIFE_EVENTS: EVENTS, eventTiming, eventTie: tie, dashaAhead });
   root.VA = VA;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

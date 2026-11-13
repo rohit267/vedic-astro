@@ -123,7 +123,11 @@ table.grid td b { font-weight: 600; }
 
 /* readings: the number, then what it says */
 .reading-sec { padding: 26px 0 12px; border-top: 1px solid var(--kumkum); }
-.reading-sec:first-child { border-top: 0; padding-top: 0; }
+.reading-sec { scroll-margin-top: 56px; }
+.jump { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: -6px 0 22px; font-size: .95rem; }
+.jump a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--line); }
+.jump a:hover, .jump a:focus-visible { color: var(--kumkum); border-bottom-color: var(--kumkum); }
+.reading-sec:first-of-type { border-top: 0; padding-top: 0; }
 .reading-sec strong { font-weight: 600; }
 .claim { display: grid; grid-template-columns: 9.5rem 1fr; gap: 6px 28px; padding: 16px 0; border-top: 1px solid var(--line); }
 .reading-sec h3 + .claim { border-top: 0; }

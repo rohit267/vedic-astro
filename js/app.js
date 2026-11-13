@@ -272,9 +272,14 @@
     const why = !(notes || table) ? '' : `<details><summary>Why ${pct(i.pct)}</summary>${notes}${table}</details>`;
     return `<div class="claim ${i.tone || ''}"><div class="claim-head">${head}</div><div>${i.text.split('\n').map((t) => `<p>${mdBold(t)}</p>`).join('')}${why}</div></div>`;
   }
+  // Readings: a row of jump links on top; each is a real deep link (#tab=reading&sec=...)
+  const slug = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const short = (t) => t.split(/[(,]/)[0].trim();
   function renderReading() {
-    $('tab-reading').innerHTML = sections1.map((s) =>
-      `<div class="reading-sec"><h3>${s.title}</h3>${s.items.map(claimHTML).join('')}${s.note ? `<p class="hint">${mdBold(s.note)}</p>` : ''}</div>`).join('');
+    const nav = `<nav class="jump" aria-label="Sections">${sections1.map((s) =>
+      `<a href="${hashFor('reading', slug(s.title))}" data-sec="${slug(s.title)}">${short(s.title)}</a>`).join('')}</nav>`;
+    $('tab-reading').innerHTML = nav + sections1.map((s) =>
+      `<div class="reading-sec" id="sec-${slug(s.title)}"><h3>${s.title}</h3>${s.items.map(claimHTML).join('')}${s.note ? `<p class="hint">${mdBold(s.note)}</p>` : ''}</div>`).join('');
   }
 
   /* ---------- MATCHING ---------- */
@@ -333,12 +338,58 @@
     calc();
   }
 
+  /* ---------- address bar: birth details and the open tab live in the #fragment, so a
+   * reload, a bookmark or the back button restores them. The fragment never reaches the server. */
+  const FIELDS = ['name', 'date', 'time', 'place', 'lat', 'lon', 'tz'];
+  let curTab = 'kundali', curSec = '', matched = false;
+  function hashFor(tab, sec) {
+    const q = new URLSearchParams({ tab });
+    if (sec) q.set('sec', sec);
+    for (const f of FIELDS) q.set(f, $('p1-' + f).value);
+    q.set('unc', $('p1-unc').value);
+    if (matched) for (const f of FIELDS) q.set('m' + f, $('p2-' + f).value);
+    return '#' + q.toString();
+  }
+  function writeUrl(push) {
+    const hash = hashFor(curTab, curSec);
+    if (hash !== location.hash) history[push ? 'pushState' : 'replaceState'](null, '', hash);
+  }
+  function goSection(sec) {
+    const el = sec && $('sec-' + sec);
+    if (el) el.scrollIntoView();
+  }
+  function readUrl() {
+    const q = new URLSearchParams(location.hash.slice(1));
+    for (const f of FIELDS) if (q.has(f)) $('p1-' + f).value = q.get(f);
+    if (q.has('unc')) $('p1-unc').value = q.get('unc');
+    matched = q.has('mdate');
+    if (matched) for (const f of FIELDS) if (q.has('m' + f)) $('p2-' + f).value = q.get('m' + f);
+    curSec = q.get('sec') || '';
+    return q.get('tab') || 'kundali';
+  }
+  function showTab(tab, push, sec = '') {
+    if (!$('tab-' + tab)) tab = 'kundali';
+    curTab = tab; curSec = sec;
+    document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('active', x.dataset.tab === tab));
+    document.querySelectorAll('.tab-panel').forEach((x) => x.classList.toggle('active', x.id === 'tab-' + tab));
+    writeUrl(push);
+  }
+  function restore() {
+    const tab = readUrl();
+    const sec = curSec;
+    calc(false);
+    if (matched) renderMatch(false);
+    showTab(tab, false, sec);
+    goSection(sec);
+  }
+
   /* ---------- main ---------- */
-  function calc() {
+  function calc(push = true) {
     try {
       const r = VA.readings(readPerson('p1'), NOW, Math.max(0, parseFloat($('p1-unc').value) || 0));
       chart1 = r.chart; dasha1 = r.dasha; sections1 = r.sections;
       renderKundali(); renderCharts(); renderDasha(); renderTiming(); renderReading();
+      if (push !== false) writeUrl(true);
     } catch (e) {
       $('tab-kundali').innerHTML = `<p class="empty">Could not compute: ${e.message}. Check the date/time/place.</p>`;
       console.error(e);
@@ -348,23 +399,27 @@
   function init() {
     setupAutocomplete('p1'); setupAutocomplete('p2');
     renderVargaSeg();
-    $('calc-btn').onclick = calc;
-    $('match-btn').onclick = renderMatch;
+    $('calc-btn').onclick = () => calc();
+    $('match-btn').onclick = () => { matched = true; renderMatch(); writeUrl(true); };
     $('save-btn').onclick = saveProfile;
     $('load-profile').onchange = (e) => { if (e.target.value !== '') applyProfile(+e.target.value); };
     loadProfilesList();
-    // tabs
-    document.querySelectorAll('#tabs button').forEach((b) => b.onclick = () => {
-      document.querySelectorAll('#tabs button').forEach((x) => x.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach((x) => x.classList.remove('active'));
-      b.classList.add('active'); $('tab-' + b.dataset.tab).classList.add('active');
+    // tabs: each switch is a history step, so the back button walks back through them
+    document.querySelectorAll('#tabs button').forEach((b) => b.onclick = () => showTab(b.dataset.tab, true));
+    window.addEventListener('popstate', restore);
+    $('tab-reading').addEventListener('click', (e) => {
+      const a = e.target.closest('a[data-sec]');
+      if (!a || e.metaKey || e.ctrlKey || e.shiftKey) return;   // let modified clicks open a new tab
+      e.preventDefault();
+      showTab('reading', true, a.dataset.sec);
+      goSection(a.dataset.sec);
     });
     // style seg
     $('style-seg').querySelectorAll('button').forEach((b) => b.onclick = () => {
       $('style-seg').querySelectorAll('button').forEach((x) => x.classList.remove('active'));
       b.classList.add('active'); curStyle = b.dataset.style; renderCharts(); renderKundali();
     });
-    calc();
+    restore();
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');   // offline + installable
   }
   document.addEventListener('DOMContentLoaded', init);

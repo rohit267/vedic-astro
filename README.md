@@ -20,7 +20,8 @@ computed live in your browser: no backend, no tracking, nothing ever leaves your
 - **Life areas with timing**: marriage, love, children, home, money and career, each with
   the most likely period, its strongest months and a chance for every period (Timing tab).
 - **Difficult periods**: money loss, health worries, worry or loss in the family, with dates.
-- **The next 12 months**: a paragraph per month on work, money, love, home and health, with a good % and a bad %.
+- **The next 12 months**: one entry per dasha period, a paragraph on work, money, love, home and health, with a good % and a bad %.
+- **Shareable links**: birth details, tab and section live in the URL after `#` (never sent to the server), so reload, back/forward and bookmarks work.
 - **Strength tables**: seven classical balas per planet (virupas) and full Ashtakavarga.
 - **Installable, works offline**: add it to your home screen or desktop. After the first
   visit it runs with no network; online it always loads the latest release.
