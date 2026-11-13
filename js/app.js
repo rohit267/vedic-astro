@@ -264,7 +264,7 @@
       + (scored ? `<span class="what">${i.label}</span>`
         // a second, "bad" percentage under the main one (monthly readings)
         + (two ? `<span class="num num2 bad">${Math.round(i.bad)}<i>%</i></span><span class="bar bad"><span style="width:${i.bad}%"></span></span><span class="what">bad</span>` : '')
-        + `<span class="stable">birth-time stable ${pct(i.stable)}</span>`
+        + (i.stable != null ? `<span class="stable">birth-time stable ${pct(i.stable)}</span>` : '')
         : `<span class="what">certain</span><span class="stable">for this birth time</span>`);
     const notes = (i.notes || []).map((n) => `<p>${mdBold(n)}</p>`).join('');
     const table = !i.factors ? '' : `<table class="grid why"><tbody>${i.factors.map((f) =>
@@ -287,33 +287,56 @@
     const inp2 = readPerson('p2');
     if (!inp2.year || isNaN(inp2.lat)) { $('match-result').innerHTML = '<p class="empty">Enter the second person\'s details.</p>'; return; }
     const c2 = VA.computeChart(inp2);
-    const m = VA.gunaMilan(chart1.planets.Moon, c2.planets.Moon);
     const n1 = (readPerson('p1').name || 'Person 1'), n2 = (inp2.name || 'Person 2');
-    const eff = m.doshas.nadiCancellable ? m.totalWithNadiCancel : m.total;
-    const verdictText = eff >= 18
-      ? 'On paper this clears the usual family threshold. But paper isn\'t the marriage. Meeting and talking is.'
-      : 'On paper this is on the lower side. That doesn\'t doom anything: a low score often just means two Moon-signs that differ, and cancellable doshas. The real test is how you actually feel together.';
+    const r = VA.matchReport(chart1, c2, NOW, n1, n2), m = r.guna;
+    const tone = r.overall >= 60 ? 'good' : r.overall >= 50 ? 'warn' : 'bad';
 
-    let html = `<div class="verdict card">
-      <div class="score">${m.total}<span class="of"> / 36 · ${pct(m.total / 36 * 100)}</span></div>
-      <p>${n1} (${chart1.planets.Moon.sign}/${chart1.planets.Moon.nakshatra}) × ${n2} (${c2.planets.Moon.sign}/${c2.planets.Moon.nakshatra})</p>
-      ${m.doshas.nadiCancellable ? `<p class="hint">Nadi dosha looks cancellable → effective ~${m.totalWithNadiCancel}/36</p>` : ''}
+    let html = `<div class="verdict card ${tone}">
+      <div class="score" style="color:var(--tone)">${pct(r.overall)}<span class="of"> overall match</span></div>
+      <p><b>${r.verdict}</b> ${n1} (${chart1.planets.Moon.sign}, ${chart1.planets.Moon.nakshatra}) and ${n2} (${c2.planets.Moon.sign}, ${c2.planets.Moon.nakshatra}) score
+        ${m.total} of 36 points${r.effective !== m.total ? `, or ${r.effective} once the cancellable doshas are counted back in` : ''}.
+        ${r.manglikPenalty ? `The Manglik mismatch takes off ${r.manglikPenalty} point${r.manglikPenalty === 1 ? '' : 's'} out of 100.` : 'Manglik status costs nothing here.'}
+        ${r.extraPenalty ? `Rajju or Vedha takes off another ${r.extraPenalty}.` : ''}</p>
     </div>`;
-    html += `<div class="card"><table class="grid koota-table"><thead><tr><th>Koota</th><th>Score</th><th>What it covers</th></tr></thead><tbody>`;
-    m.kootas.forEach((k) => {
-      const cls = k.got === 0 ? 'b' : (k.got >= k.max * 0.75 ? 'g' : '');
-      html += `<tr><td><b>${k.name}</b></td><td class="${cls}">${k.got} / ${k.max} · ${pct(k.got / k.max * 100)}</td><td>${k.note}</td></tr>`;
-    });
-    html += `<tr><td><b>Total</b></td><td><b>${m.total} / 36 · ${pct(m.total / 36 * 100)}</b></td><td></td></tr></tbody></table></div>`;
 
-    // doshas
-    const mA = VA.manglik(chart1), mB = VA.manglik(c2);
-    html += `<div class="card"><h3>Doshas</h3>`;
-    html += `<div class="dosha-note">${m.doshas.bhakoot ? '⚠️ <b>Bhakoot dosha</b> present (2/12, 5/9 or 6/8 between Moons), a family/longevity caution.' : '✅ <b>Bhakoot</b> clean, good for family harmony & longevity.'}</div>`;
-    html += `<div class="dosha-note">${m.doshas.nadi ? (m.doshas.nadiCancellable ? '⚠️ <b>Nadi dosha</b> (same nadi), but <b>cancellable</b> here (different nakshatra, sign & star-lord).' : '⚠️ <b>Nadi dosha</b> (same nadi), not clearly cancellable; ask a senior astrologer.') : '✅ <b>Nadi</b> clean.'}</div>`;
-    html += `<div class="dosha-note"><b>Manglik:</b> ${n1}: ${mA.isManglik ? 'yes' + (mA.marsDignity === 'Debilitated' ? ' (weak Mars)' : '') : 'no'}; ${n2}: ${mB.isManglik ? 'yes' + (mB.marsDignity === 'Debilitated' ? ' (weak Mars)' : '') : 'no'}. ${mA.isManglik === mB.isManglik ? (mA.isManglik ? 'Both Manglik: that mutually cancels.' : 'Neither Manglik: clean.') : 'One is Manglik and the other isn\'t: the classic point families raise; a debilitated/weak Mars makes it mild.'}</div>`;
-    html += `</div>`;
-    html += `<div class="card"><h3>Honest read</h3><p>${verdictText}</p></div>`;
+    // what will work, what needs effort, what will not: one coloured block per area
+    const group = (title, level) => {
+      const list = r.areas.filter((a) => a.level === level);
+      return !list.length ? '' : `<div class="reading-sec"><h3>${title}</h3>${list.map((a) =>
+        claimHTML({ pct: a.pct, label: 'likely to go well', tone: a.tone, text: `**${a.name}.** ${a.text}` })).join('')}</div>`;
+    };
+    html += group('What will work', 'high') + group('What needs effort', 'mid') + group('What will not work easily', 'low');
+
+    const mk = r.manglik;
+    html += `<div class="card"><h3>Manglik status of both</h3>
+      ${mk.text.slice(0, 2).map((t) => `<p>${t}</p>`).join('')}
+      <div class="dosha-note" style="border-left:3px solid var(--${mk.mismatch > 0.35 ? 'bad' : mk.state === 'one' ? 'warn' : 'good'})"><b>${mk.text[2]}</b>
+        Mismatch after cancellations: ${pct(mk.mismatch * 100)}.</div></div>`;
+
+    // when: the period both charts favour for marriage
+    const E = VA.LIFE_EVENTS[0], t1 = VA.eventTiming(chart1, dasha1, E, NOW), t2 = VA.eventTiming(c2, VA.vimshottari(c2, NOW), E, NOW);
+    if (t1.periods.length && t2.periods.length) {
+      let best = null;
+      for (const p of t1.periods) for (const q of t2.periods) {
+        const a = Math.max(p.startMs, q.startMs), b = Math.min(p.endMs, q.endMs);
+        if (b - a < 30 * 86400000) continue;
+        const score = p.share * q.share;
+        if (!best || score > best.score) best = { a, b, score, p, q };
+      }
+      const own = (name, t) => `${name}: ${fmtMY(t.ranked[0].startMs)} to ${fmtMY(t.ranked[0].endMs)} (${pct(t.ranked[0].share)})`;
+      html += `<div class="card"><h3>When</h3>
+        <p>Each chart's own most likely marriage window. ${own(n1, t1)}. ${own(n2, t2)}.</p>
+        ${best ? `<p><b>Best shared window: ${fmtMY(best.a)} to ${fmtMY(best.b)}.</b> It is the stretch both charts rate highest together (${pct(best.p.share)} for ${n1}, ${pct(best.q.share)} for ${n2}).</p>` : ''}</div>`;
+    }
+
+    // all eight kootas in words: who is what, and what that pairing means
+    html += `<div class="reading-sec"><h3>The 36 points, koota by koota</h3>${r.kootas.map((k) =>
+      claimHTML({ pct: k.pct, label: `${k.got} of ${k.max} points`, tone: k.tone, text: `**${k.name}: ${k.topic.toLowerCase()}.** ${k.text}` })).join('')}
+      <p class="hint">Total ${m.total} of 36${r.effective !== m.total ? `, or ${r.effective} with cancelled doshas counted back in` : ''}.</p></div>`;
+    html += `<div class="card"><h3>Four further checks</h3>${r.extras.map((x) =>
+      `<div class="dosha-note" style="border-left:3px solid var(--${x.bad ? 'bad' : x.good === false ? 'line' : 'good'})"><b>${x.name}.</b> ${x.text}</div>`).join('')}
+      <p class="hint">From the ten-point (porutham) tradition, taking ${n1} as the groom and ${n2} as the bride. A Rajju or Vedha flag takes 6 or 4 points off the overall figure.</p></div>`;
+    html += `<p class="hint">The overall figure is the 36-point score with cancellable doshas counted back in, minus up to 12 points for a Manglik mismatch and up to 10 for Rajju and Vedha. Each area is its share of the points behind it. These are the classical rules in numbers, not measured odds for a real couple: meeting and talking still decides it.</p>`;
     $('match-result').innerHTML = html;
   }
 

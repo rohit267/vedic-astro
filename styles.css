@@ -163,6 +163,7 @@ details.event > summary { padding: 6px 0; color: var(--ink); font-size: 1.05rem;
 /* matching */
 .verdict .score { font: 700 clamp(3rem, 9vw, 4.6rem)/1 var(--display); color: var(--kumkum); margin-bottom: 8px; }
 .verdict .of { font-size: .32em; font-weight: 600; color: var(--muted); }
+#match-result .reading-sec:first-of-type { border-top: 1px solid var(--kumkum); padding-top: 26px; }
 #tab-matching .birth-grid { margin: 6px 0 20px; }
 
 .site-foot { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--kumkum); color: var(--muted); font-size: .9rem; }

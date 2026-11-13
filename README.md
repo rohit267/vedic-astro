@@ -13,8 +13,10 @@ computed live in your browser: no backend, no tracking, nothing ever leaves your
   Saptamsa (D7) and Navamsa (D9), each drawn in **North / South / East** style (toggle).
 - **Dasha**: Vimshottari Mahā → Antar → Pratyantar, with the current period highlighted.
 - **Timing**: Sade Sati status, Manglik check, and the flavour of the periods ahead.
-- **Matching**: full 36-guna Ashtakoota (Guna Milan) with Bhakoot / Nadi / Manglik doshas
-  and their cancellation rules.
+- **Matching**: an overall match %, what will work and what will not in plain words, every one of
+  the 36-point kootas explained for the pair (Deva, Manushya, Rakshasa and the rest), both people's
+  Manglik status with the classical cancellations, Rajju, Vedha, Mahendra, Stree Deergha, and the
+  best shared marriage window.
 - **Readings**: plain-spoken, honest interpretations, **each with a percentage** and a
   "Why" breakdown. A chart is treated as a *map of tendencies and seasons*, never a verdict.
 - **Life areas with timing**: marriage, love, children, home, money and career, each with

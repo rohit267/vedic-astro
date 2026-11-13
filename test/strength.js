@@ -97,4 +97,18 @@ const months = flat(VA.readings(demo, NOW, 0)).filter((i) => i.id.startsWith('da
 assert(months.length >= 2);
 for (const i of months) assert(i.pct >= 0 && i.pct <= 100 && i.bad >= 0 && i.bad <= 100 && i.tone && i.text.length > 200 && !/\b(Sun|Moon|Mars|Mercury|Jupiter|Venus|Saturn|Rahu|Ketu|house)\b/.test(i.text.replace(/\([^)]* period\)/, '')), i.text);
 console.log('✅ Life-event timing: windows tile from today, shares sum to 100%, past windows handled');
+// Match report: both Manglik statuses counted, areas and overall in range
+const g2 = VA.computeChart({ year: 2004, month: 7, day: 20, hour: 21, minute: 30, lat: 23.7957, lon: 86.4304, tz: 5.5 });
+const mr = VA.matchReport(rohit, g2, NOW, 'A', 'B');
+assert.strictEqual(mr.guna.total, 12.5);
+assert.strictEqual(mr.manglik.state, 'one');
+assert(mr.manglik.b.isManglik && !mr.manglik.a.isManglik && mr.manglik.text.length === 3);
+assert(mr.overall >= 0 && mr.overall <= 100 && mr.areas.length === 5 && mr.areas.every((a) => a.pct >= 0 && a.pct <= 100 && a.text));
+const self = VA.matchReport(g2, g2, NOW, 'A', 'B');
+assert.strictEqual(self.manglik.state, 'both');
+assert.strictEqual(self.manglik.mismatch, 0);            // two equal Mangliks cancel
+assert.strictEqual(mr.kootas.length, 8);
+assert(mr.kootas.find((k) => k.name === 'Gana').text.includes('Deva') && mr.kootas.find((k) => k.name === 'Gana').text.includes('Rakshasa'));
+assert(mr.kootas.every((k) => k.text && !/undefined/.test(k.text)) && mr.extras.length === 4);
+console.log('✅ Match report: Manglik of both counted, cancellations applied, areas in range, every koota in words');
 console.log('\nALL STRENGTH CHECKS PASSED');
