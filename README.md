@@ -17,6 +17,8 @@ computed live in your browser: no backend, no tracking, nothing ever leaves your
   and their cancellation rules.
 - **Readings**: plain-spoken, honest interpretations, **each with a percentage** and a
   "Why" breakdown. A chart is treated as a *map of tendencies and seasons*, never a verdict.
+- **Life areas with timing**: marriage, love, children, home, money and career, each with
+  the most likely period, its strongest months and a chance for every period (Timing tab).
 - **Strength tables**: seven classical balas per planet (virupas) and full Ashtakavarga.
 - **Installable, works offline**: add it to your home screen or desktop. After the first
   visit it runs with no network, and picks up a new release on the visit after it ships.
@@ -109,6 +111,7 @@ js/kundali.js           assemble a full chart
 js/dasha.js             Vimshottari dasha
 js/matching.js          Ashtakoota guna milan + doshas
 js/strength.js          planet balas, Ashtakavarga, house and dasha scores
+js/timing.js            when life events are likely: dasha ties, double transit, age
 js/predictions.js       rule-based readings with percentages + birth-time stability
 js/charts.js            North / South / East SVG renderers
 js/cities.js            birthplaces: hand-made Indian list + 1,227 world cities with time zones

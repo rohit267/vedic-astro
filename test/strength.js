@@ -2,7 +2,7 @@
  * at known astronomical moments, ranges over 400 random charts, and stability. */
 const assert = require('assert');
 global.Astronomy = require('../vendor/astronomy.browser.min.js');
-['ephemeris', 'panchang', 'kundali', 'dasha', 'matching', 'strength', 'predictions'].forEach((m) => require('../js/' + m + '.js'));
+['ephemeris', 'panchang', 'kundali', 'dasha', 'matching', 'strength', 'timing', 'predictions'].forEach((m) => require('../js/' + m + '.js'));
 const VA = globalThis.VA;
 const NOW = new Date(Date.UTC(2026, 10, 13));
 const DELHI = { lat: 28.6139, lon: 77.209, tz: 5.5 };
@@ -76,4 +76,19 @@ const lagna = edge.find((i) => i.id === 'lagna'), moon = edge.find((i) => i.id =
 assert(lagna.stable > 40 && lagna.stable < 70, `lagna stable ${lagna.stable}`);
 assert.strictEqual(moon.stable, 100);
 console.log(`✅ Stability: Lagna ${lagna.stable.toFixed(0)}% / Moon sign ${moon.stable.toFixed(0)}% when born 1 min before the Lagna changes (±5 min)`);
+// Life-event timing: periods tile the window from today, shares sum to 100
+const rohit = VA.computeChart({ year: 1998, month: 7, day: 31, hour: 23, minute: 45, lat: 23.7957, lon: 86.4304, tz: 5.5 });
+const rd = VA.vimshottari(rohit, NOW);
+for (const e of VA.LIFE_EVENTS) {
+  const r = VA.eventTiming(rohit, rd, e, NOW);
+  assert(Math.abs(sum(r.periods.map((p) => p.share)) - 100) < 1e-6, e.key);
+  assert.strictEqual(r.periods[0].startMs, NOW.getTime());
+  r.periods.forEach((p, i) => i && assert.strictEqual(p.startMs, r.periods[i - 1].endMs));
+  assert(r.ranked[0].share >= r.ranked[r.ranked.length - 1].share);
+}
+const old = VA.computeChart({ year: 1940, month: 1, day: 1, hour: 12, minute: 0, ...DELHI });
+assert.strictEqual(VA.eventTiming(old, VA.vimshottari(old, NOW), VA.LIFE_EVENTS[0], NOW).periods.length, 0);   // marriage window passed
+const when = flat(VA.readings(demo, NOW, 5)).filter((i) => i.id.startsWith('area-'));
+assert.strictEqual(when.length, VA.LIFE_EVENTS.length);
+console.log('✅ Life-event timing: windows tile from today, shares sum to 100%, past windows handled');
 console.log('\nALL STRENGTH CHECKS PASSED');

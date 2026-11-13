@@ -1,5 +1,5 @@
 global.Astronomy = require('../vendor/astronomy.browser.min.js');
-['ephemeris','panchang','kundali','dasha','matching','strength','predictions','charts','cities'].forEach(m=>require('../js/'+m+'.js'));
+['ephemeris','panchang','kundali','dasha','matching','strength','timing','predictions','charts','cities'].forEach(m=>require('../js/'+m+'.js'));
 const VA = globalThis.VA;
 const NOW = new Date(Date.UTC(2026,6,5));
 

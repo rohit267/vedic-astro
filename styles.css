@@ -135,6 +135,7 @@ table.grid td b { font-weight: 600; }
 .claim .what { color: var(--ink); font-weight: 600; }
 .claim p { margin: 4px 0 6px; }
 .claim details { font-size: .92rem; }
+.claim details p { margin: 6px 0; color: var(--muted); }
 
 /* dasha and timing */
 .dasha-list, .sub-list { display: grid; }
@@ -143,6 +144,10 @@ table.grid td b { font-weight: 600; }
 .dasha-row[style] { padding-left: 12px; }
 .dasha-row .lord { font: 600 1.08rem var(--display); }
 .dasha-row .dates { color: var(--muted); font-size: .94rem; }
+.share { display: grid; grid-template-columns: 90px 3em; align-items: center; gap: 10px; text-align: right; font: 700 1rem var(--display); font-variant-numeric: tabular-nums; }
+.share .bar { margin: 0; }
+details.event { margin: 6px 0 14px; }
+details.event > summary { padding: 6px 0; color: var(--ink); font-size: 1.05rem; }
 .sub-list { margin-bottom: 8px; }
 .dosha-note { padding: 4px 0 4px 14px; margin: 14px 0; border-left: 3px solid var(--line); max-width: 74ch; }
 

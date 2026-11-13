@@ -178,6 +178,6 @@
     return { sign, bindus: analyse(chart).av.bav[planet][sign] };
   }
 
-  Object.assign(VA, { analyse, strengthOf, houseScore, periodScore, transit, STRENGTH_MAX: MAX, SEVEN });
+  Object.assign(VA, { analyse, rulerOf, aspects, strengthOf, houseScore, periodScore, transit, STRENGTH_MAX: MAX, SEVEN });
   root.VA = VA;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -53,22 +53,32 @@
     Mars: 'drive, courage and stamina', Mercury: 'intellect, speech and business sense',
     Jupiter: 'wisdom, luck and good counsel', Venus: 'love, comfort and taste', Saturn: 'discipline, endurance and long-game results' };
 
-  // [house, significators, what the house covers]
-  const AREAS = [
-    [1, ['Sun'], 'Self, body & confidence'], [2, ['Jupiter'], 'Money, savings & family'],
-    [4, ['Moon'], 'Home, mother & peace of mind'], [5, ['Jupiter'], 'Learning, creativity & children'],
-    [7, ['Venus'], 'Marriage & partnership'], [9, ['Jupiter', 'Sun'], 'Luck, mentors & purpose'],
-    [10, ['Sun', 'Saturn'], 'Career & public standing'], [11, ['Jupiter'], 'Income, gains & network'],
-  ];
   /* Band cut-points = the lower and upper third of each score over 400 random charts
    * (test/reference.json), so "strong" means stronger than about two charts in three. */
   const CUTS = { area: [49, 57], period: [52, 60], planet: [43, 54] };
   const band = (kind, pct) => (pct >= CUTS[kind][1] ? 'high' : pct >= CUTS[kind][0] ? 'mid' : 'low');
-  const AREA_TEXT = {
-    high: 'The indicators line up: this tends to come more easily and hold steady.',
-    mid: 'Mixed signals: it works, roughly in proportion to the effort you put in.',
-    low: 'The indicators are thin: expect it to come slower and to need deliberate work.',
+  // What a house lord's placement links a life area with
+  const THROUGH = ['', 'your own initiative and personality', 'family, savings or speech',
+    'siblings, neighbours, writing, media or your own effort', 'home, mother, property or your hometown',
+    'romance, studies, creative work or children', 'work, service, health matters or competition',
+    'partners, clients or the public', 'sudden events, in-laws, research or shared money',
+    'teachers, father, faith, higher studies or long journeys', 'career, status and public life',
+    'friends, networks, elder siblings and gains', 'foreign places, travel, spending or quiet retreat'];
+  const LINK = {
+    marriage: (x) => `you may meet your partner through ${x}`,
+    love: (x) => `romance tends to start through ${x}`,
+    children: (x) => `children and your joy in them are tied to ${x}`,
+    home: (x) => `home and property come through ${x}`,
+    money: (x) => `gains come mainly through ${x}`,
+    career: (x) => `your career runs through ${x}`,
   };
+  const IN_HOUSE = { Sun: 'pride and authority, sometimes ego clashes', Moon: 'strong feeling and some ups and downs',
+    Mars: 'drive and heat, with some friction', Mercury: 'talk, wit and a youthful touch',
+    Jupiter: 'growth, wisdom and protection', Venus: 'ease, charm and pleasure', Saturn: 'delay, but durability',
+    Rahu: 'the unusual or foreign, and sudden turns', Ketu: 'detachment; it can feel less satisfying than it looks' };
+  const LOOKS = { Saturn: 'slower, but lasting', Jupiter: 'protection and growth', Mars: 'energy, and some friction' };
+  const SUPPORT_WORD = { high: 'above average', mid: 'average', low: 'below average' };
+  const KARAKA_WORD = { high: 'strong', mid: 'of average strength', low: 'weak' };
   const PERIOD_TEXT = { high: 'a supportive stretch for this chart', mid: 'a mixed stretch for this chart', low: 'a demanding stretch for this chart' };
 
   // Sade Sati: transiting Saturn in the 12th, 1st or 2nd sign from the natal Moon
@@ -81,8 +91,9 @@
 
   /* One reading. id is fixed per slot; key is the outcome it states, so two charts
    * agree on a reading when the keys match. pct/label are omitted for plain facts,
-   * whose percentage is the stability figure alone. tone = good | warn | bad. */
-  const item = (id, key, text, pct, label, factors, tone) => ({ id, key: String(key), text, pct, label, factors, tone });
+   * whose percentage is the stability figure alone. tone = good | warn | bad.
+   * notes = the chart reasoning, shown under "Why" so the text itself stays plain. */
+  const item = (id, key, text, pct, label, factors, tone, notes) => ({ id, key: String(key), text, pct, label, factors, tone, notes });
   const toneOf = (kind, pct) => ({ high: 'good', mid: 'warn', low: 'bad' })[band(kind, pct)];
 
   function build(chart, dasha, now) {
@@ -113,17 +124,52 @@
           tr.bindus / 8 * 100, 'supportive', null, tr.bindus >= 5 ? 'good' : tr.bindus === 4 ? 'warn' : 'bad'));
       }
       sec('⏳', 'The season you are in now', items, 'A dasha is a season, not a sentence. It tilts the odds; you still choose how you walk through it.');
+
     }
 
-    sec('🏠', 'Life areas', AREAS.map(([h, karakas, name]) => {
-      const hs = VA.houseScore(chart, h, karakas), b = band('area', hs.pct);
+    const mon = (ms) => new Date(ms).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+    const span = (a, b) => `${mon(a)} to ${mon(b)}`;
+    sec('🏠', 'Life areas', VA.LIFE_EVENTS.map((e) => {
+      const h = e.house, hs = VA.houseScore(chart, h, [e.karaka]), K = P[e.karaka];
+      const link = LINK[e.key](THROUGH[hs.lordHouse]), sb = band('area', hs.pct);
+      // plain text: what it means; notes: the chart facts behind it
+      const plain = [link[0].toUpperCase() + link.slice(1) + '.'];
+      const why = [`Your ${VA.ordinal(h)} lord, ${hs.lord}, sits in your ${VA.ordinal(hs.lordHouse)} house, which links this area with ${THROUGH[hs.lordHouse]}.`];
+      if ([6, 8, 12].includes(hs.lordHouse)) { plain.push('Expect some delay, distance or extra effort first.'); why.push('The 6th, 8th and 12th are hard houses for a lord.'); }
+      else if (hs.lordHouse === h) why.push('The lord sits in its own house, which keeps this area steady.');
+      if (sb === 'high') plain.push('Your chart backs it well.');
+      if (sb === 'low') plain.push('It may take more effort than usual.');
+      const what = why;
       const here = VA.PLANETS.filter((p) => P[p].house === h);
-      const flavour = h !== 7 ? '' : here.includes('Saturn') ? ' Saturn here points to a serious, loyal, sometimes delayed union.'
-        : here.includes('Venus') ? ' Venus here brings charm and comfort to partnership.'
-        : here.includes('Mars') ? ' Mars here brings passion and heat. Mind the friction.' : '';
-      return item('area-' + h, b, `**${name}**: ${VA.ordinal(h)} house, ${sign(hs.sign)}, ruled by ${hs.lord} in your ${VA.ordinal(hs.lordHouse)}. ${AREA_TEXT[b]}${flavour}`,
-        hs.pct, 'support', hs.factors, toneOf('area', hs.pct));
-    }), 'None of this names a person or an event. It says where the chart gives you a tailwind and where you row.');
+      here.forEach((p) => what.push(`${p} in the ${VA.ordinal(h)} brings ${IN_HOUSE[p]}.`));
+      const looks = Object.keys(LOOKS).filter((p) => !here.includes(p) && VA.aspects(chart, p, h));
+      if (looks.length) what.push(looks.map((p) => `${p} aspects it: ${LOOKS[p]}.`).join(' '));
+      const kState = [K.dignity && K.dignity.toLowerCase(), K.retro && 'retrograde', K.combust && 'combust'].filter(Boolean);
+      what.push(`${e.karaka}, its natural significator, is ${KARAKA_WORD[band('planet', S[e.karaka].pct)]}${kState.length ? ` (${kState.join(', ')})` : ''}.`);
+      what.push(`Overall support in your chart: ${Math.round(hs.pct)}%, ${SUPPORT_WORD[sb]}.`);
+      const support = hs.factors.map((f) => ({ ...f, label: 'Support: ' + f.label }));
+
+      const r = dasha && now ? VA.eventTiming(chart, dasha, e, now) : { periods: [] };
+      if (!r.periods.length) {
+        const when = dasha ? `The usual age window (${e.ages[0]} to ${e.ages[1]}) is behind you, so no period is singled out.` : '';
+        return item('area-' + e.key, `${hs.lordHouse}-${sb}`, `**${e.name}.** ${when}\n${plain.join(' ')}`,
+          hs.pct, 'support', support, toneOf('area', hs.pct), what);
+      }
+      const [best, next] = r.ranked;
+      const when = `Most likely **${span(best.startMs, best.endMs)}**`
+        // a peak covering most of the period adds nothing, so only name a narrower one
+        + `${best.peak && best.peak.to - best.peak.from < 0.7 * (best.endMs - best.startMs) ? `, strongest ${span(best.peak.from, best.peak.to)}` : ''}.`
+        + `${next ? ` Next most likely ${span(next.startMs, next.endMs)} (${Math.round(next.share)}%).` : ''}`;
+      what.unshift(`The most likely window is the ${best.md}–${best.ad} period: ${best.md} main period, ${best.ad} sub-period.`);
+      return item('area-' + e.key, `${best.md}-${best.ad}-${hs.lordHouse}`, `**${e.name}.** ${when}\n${plain.join(' ')}`,
+        best.share, 'chance in this window', [
+          { label: `${best.md}, main period lord: tie to the ${VA.ordinal(h)} house and ${e.karaka}`, pct: best.tieMd * 100, w: 40 },
+          { label: `${best.ad}, sub-period lord: tie to the ${VA.ordinal(h)} house and ${e.karaka}`, pct: best.tieAd * 100, w: 60 },
+          { label: `Months with Jupiter and Saturn both on the ${VA.ordinal(h)} house or its lord: ${best.double} of ${best.months}`, pct: best.double / best.months * 100 },
+          { label: `Share of all timing signal from today to ${mon(r.end)}`, pct: best.share },
+          ...support,
+        ], undefined, what);
+    }), '**Chance** is the share of the classical timing signal that falls in that period, counting from today to the end of the usual age window (at most 20 years ahead), assuming it has not happened yet. It comes from the dasha lords tied to the house, Jupiter and Saturn transiting it together, and how common the event is at each age. **Support** is how strongly the chart backs the area as a whole. Every period is listed on the Timing tab.');
 
     const mang = VA.manglik(chart), flagged = mang.references.filter((r) => r.manglik).length;
     sec('🔥', 'Mangal (Manglik) status', [item('manglik', mang.isManglik,

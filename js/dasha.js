@@ -63,6 +63,6 @@
     };
   }
 
-  Object.assign(VA, { vimshottari });
+  Object.assign(VA, { vimshottari, birthMs });
   root.VA = VA;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

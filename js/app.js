@@ -220,6 +220,21 @@
       <b>Manglik:</b> ${mang.isManglik ? `Yes: flagged from ${mang.flaggedFrom.join(', ')}.${mang.marsDignity === 'Debilitated' ? ' Mars is debilitated (weak), which softens it.' : ''}` : 'No: Mars is clear of the sensitive houses.'}</div>`;
     html += `</div>`;
 
+    // Life-event timing: every period in each event's window, with its share of the chance
+    html += `<div class="card"><h3>When things are likely to happen</h3>`;
+    VA.LIFE_EVENTS.forEach((e, i) => {
+      const r = VA.eventTiming(c, dasha1, e, NOW), best = r.ranked && r.ranked[0];
+      if (!best) { html += `<p><b>${e.name}</b>: the usual window (ages ${e.ages[0]} to ${e.ages[1]}) is behind you.</p>`; return; }
+      html += `<details class="event"${i === 0 ? ' open' : ''}><summary><b>${e.name}</b>: most likely ${fmtMY(best.startMs)} to ${fmtMY(best.endMs)}, ${pct(best.share)}</summary><div class="dasha-list">`;
+      r.periods.forEach((p) => {
+        html += `<div class="dasha-row${p === best ? ' now' : ''}"><span class="lord">${p.md}–${p.ad}</span>
+          <span class="dates">${fmtMY(p.startMs)} → ${fmtMY(p.endMs)}${p.peak ? ` · strongest ${fmtMY(p.peak.from)} to ${fmtMY(p.peak.to)}` : ''}</span>
+          <span class="share"><span class="bar"><span style="width:${p.share}%"></span></span>${pct(p.share)}</span></div>`;
+      });
+      html += `</div></details>`;
+    });
+    html += `<p class="hint">Each percentage is that period's share of the classical timing signal up to the end of the window (the event's usual ages, at most 20 years ahead): dasha lords tied to the house, Jupiter and Saturn transiting it together, and how common the event is at that age. It assumes the event has not happened yet. It is how the rules spread the chance, not a measured probability.</p></div>`;
+
     // Upcoming antardashas across current + next maha, with tone
     html += `<div class="card"><h3>Periods ahead: how favourable each is for this chart</h3><div class="dasha-list">`;
     const upcoming = [];
@@ -245,9 +260,11 @@
     const head = `<span class="num">${n}<i>%</i></span><span class="bar"><span style="width:${n}%"></span></span>`
       + (scored ? `<span class="what">${i.label}</span><span class="stable">birth-time stable ${pct(i.stable)}</span>`
         : `<span class="what">certain</span><span class="stable">for this birth time</span>`);
-    const why = !i.factors ? '' : `<details><summary>Why ${pct(i.pct)}</summary><table class="grid why"><tbody>${i.factors.map((f) =>
-      `<tr><td>${f.label}</td><td>${pct(f.pct)}</td><td class="hint">${f.w ? 'weight ' + f.w : ''}</td></tr>`).join('')}</tbody></table></details>`;
-    return `<div class="claim ${i.tone || ''}"><div class="claim-head">${head}</div><div><p>${mdBold(i.text)}</p>${why}</div></div>`;
+    const notes = (i.notes || []).map((n) => `<p>${mdBold(n)}</p>`).join('');
+    const table = !i.factors ? '' : `<table class="grid why"><tbody>${i.factors.map((f) =>
+      `<tr><td>${f.label}</td><td>${pct(f.pct)}</td><td class="hint">${f.w ? 'weight ' + f.w : ''}</td></tr>`).join('')}</tbody></table>`;
+    const why = !(notes || table) ? '' : `<details><summary>Why ${pct(i.pct)}</summary>${notes}${table}</details>`;
+    return `<div class="claim ${i.tone || ''}"><div class="claim-head">${head}</div><div>${i.text.split('\n').map((t) => `<p>${mdBold(t)}</p>`).join('')}${why}</div></div>`;
   }
   function renderReading() {
     $('tab-reading').innerHTML = sections1.map((s) =>
