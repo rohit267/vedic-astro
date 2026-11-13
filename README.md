@@ -19,9 +19,11 @@ computed live in your browser: no backend, no tracking, nothing ever leaves your
   "Why" breakdown. A chart is treated as a *map of tendencies and seasons*, never a verdict.
 - **Life areas with timing**: marriage, love, children, home, money and career, each with
   the most likely period, its strongest months and a chance for every period (Timing tab).
+- **Difficult periods**: money loss, health worries, worry or loss in the family, with dates.
+- **The next 12 months**: a paragraph per month on work, money, love, home and health, with a good % and a bad %.
 - **Strength tables**: seven classical balas per planet (virupas) and full Ashtakavarga.
 - **Installable, works offline**: add it to your home screen or desktop. After the first
-  visit it runs with no network, and picks up a new release on the visit after it ships.
+  visit it runs with no network; online it always loads the latest release.
 
 ## How the accuracy works
 

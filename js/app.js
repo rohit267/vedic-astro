@@ -225,7 +225,9 @@
     VA.LIFE_EVENTS.forEach((e, i) => {
       const r = VA.eventTiming(c, dasha1, e, NOW), best = r.ranked && r.ranked[0];
       if (!best) { html += `<p><b>${e.name}</b>: the usual window (ages ${e.ages[0]} to ${e.ages[1]}) is behind you.</p>`; return; }
-      html += `<details class="event"${i === 0 ? ' open' : ''}><summary><b>${e.name}</b>: most likely ${fmtMY(best.startMs)} to ${fmtMY(best.endMs)}, ${pct(best.share)}</summary><div class="dasha-list">`;
+      const tone = e.bad ? (best.density >= 0.5 ? 'bad' : 'warn') : VA.scoreTone('area', r.promise);
+      if (e.bad && !VA.LIFE_EVENTS[i - 1].bad) html += `<h4 class="event-group">Difficult periods</h4>`;
+      html += `<details class="event ${tone}"${i === 0 ? ' open' : ''}><summary><span class="pct ${tone}">${pct(best.share)}</span> <b>${e.name}</b>: most likely ${fmtMY(best.startMs)} to ${fmtMY(best.endMs)}</summary><div class="dasha-list">`;
       r.periods.forEach((p) => {
         html += `<div class="dasha-row${p === best ? ' now' : ''}"><span class="lord">${p.md}–${p.ad}</span>
           <span class="dates">${fmtMY(p.startMs)} → ${fmtMY(p.endMs)}${p.peak ? ` · strongest ${fmtMY(p.peak.from)} to ${fmtMY(p.peak.to)}` : ''}</span>
@@ -233,7 +235,7 @@
       });
       html += `</div></details>`;
     });
-    html += `<p class="hint">Each percentage is that period's share of the classical timing signal up to the end of the window (the event's usual ages, at most 20 years ahead): dasha lords tied to the house, Jupiter and Saturn transiting it together, and how common the event is at that age. It assumes the event has not happened yet. It is how the rules spread the chance, not a measured probability.</p></div>`;
+    html += `<p class="hint">Each percentage is that period's share of the classical timing signal up to the end of the window (the event's usual ages, at most 20 years ahead): dasha lords tied to the house, Jupiter and Saturn transiting it together (Saturn and Rahu for difficult periods), and how common the event is at that age. Colour: green, amber or red for how strongly the chart supports a good event; amber or red for how strong the signal of a difficult one is. It assumes the event has not happened yet. It is how the rules spread the chance, not a measured probability.</p></div>`;
 
     // Upcoming antardashas across current + next maha, with tone
     html += `<div class="card"><h3>Periods ahead: how favourable each is for this chart</h3><div class="dasha-list">`;
@@ -257,8 +259,12 @@
   function claimHTML(i) {
     // Scored readings lead with the score; plain facts lead with how certain the birth time makes them
     const scored = i.pct != null, n = Math.round(scored ? i.pct : i.stable);
-    const head = `<span class="num">${n}<i>%</i></span><span class="bar"><span style="width:${n}%"></span></span>`
-      + (scored ? `<span class="what">${i.label}</span><span class="stable">birth-time stable ${pct(i.stable)}</span>`
+    const two = i.bad != null;   // monthly readings: green "good" number over a red "bad" one
+    const head = `<span class="num${two ? ' num1' : ''}">${n}<i>%</i></span><span class="bar${two ? ' good' : ''}"><span style="width:${n}%"></span></span>`
+      + (scored ? `<span class="what">${i.label}</span>`
+        // a second, "bad" percentage under the main one (monthly readings)
+        + (two ? `<span class="num num2 bad">${Math.round(i.bad)}<i>%</i></span><span class="bar bad"><span style="width:${i.bad}%"></span></span><span class="what">bad</span>` : '')
+        + `<span class="stable">birth-time stable ${pct(i.stable)}</span>`
         : `<span class="what">certain</span><span class="stable">for this birth time</span>`);
     const notes = (i.notes || []).map((n) => `<p>${mdBold(n)}</p>`).join('');
     const table = !i.factors ? '' : `<table class="grid why"><tbody>${i.factors.map((f) =>

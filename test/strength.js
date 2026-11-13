@@ -89,6 +89,12 @@ for (const e of VA.LIFE_EVENTS) {
 const old = VA.computeChart({ year: 1940, month: 1, day: 1, hour: 12, minute: 0, ...DELHI });
 assert.strictEqual(VA.eventTiming(old, VA.vimshottari(old, NOW), VA.LIFE_EVENTS[0], NOW).periods.length, 0);   // marriage window passed
 const when = flat(VA.readings(demo, NOW, 5)).filter((i) => i.id.startsWith('area-'));
-assert.strictEqual(when.length, VA.LIFE_EVENTS.length);
+assert.strictEqual(when.length, VA.LIFE_EVENTS.filter((e) => !e.bad).length);
+const hard = flat(VA.readings(demo, NOW, 0)).filter((i) => i.id.startsWith('hard-'));
+assert.strictEqual(hard.length, VA.LIFE_EVENTS.filter((e) => e.bad).length);
+for (const i of [...when, ...hard]) assert(['good', 'warn', 'bad'].includes(i.tone), i.id + ' has no colour');
+const months = flat(VA.readings(demo, NOW, 0)).filter((i) => i.id.startsWith('month-'));
+assert.strictEqual(months.length, 12);
+for (const i of months) assert(i.pct >= 0 && i.pct <= 100 && i.bad >= 0 && i.bad <= 100 && i.tone && i.text.length > 200 && !/\b(Sun|Moon|Mars|Mercury|Jupiter|Venus|Saturn|Rahu|Ketu|house)\b/.test(i.text), i.text);
 console.log('✅ Life-event timing: windows tile from today, shares sum to 100%, past windows handled');
 console.log('\nALL STRENGTH CHECKS PASSED');

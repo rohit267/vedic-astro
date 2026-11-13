@@ -63,6 +63,15 @@
     };
   }
 
-  Object.assign(VA, { vimshottari, birthMs });
+    // Maha, antar and pratyantar running at a moment (ms)
+  function periodAt(dasha, ms) {
+    const inside = (p) => ms >= p.startMs && ms < p.endMs;
+    const md = dasha.maha.find(inside), ad = md && md.antar.find(inside);
+    if (!ad) return null;
+    ad.pratyantar = ad.pratyantar || subPeriods(ad.lord, ad.years, ad.startMs);
+    return { md, ad, pd: ad.pratyantar.find(inside) };
+  }
+
+  Object.assign(VA, { vimshottari, birthMs, periodAt });
   root.VA = VA;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
