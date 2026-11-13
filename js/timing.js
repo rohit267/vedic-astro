@@ -16,7 +16,7 @@
   // age = [mean, spread] of a bell curve for how common the event is at each age
   const EVENTS = [
     { key: 'marriage', name: 'Marriage', house: 7, also: [2, 11], karaka: 'Venus', ages: [18, 45], age: [27, 5] },
-    { key: 'love', name: 'Love and romance', house: 5, also: [7, 11], karaka: 'Venus', ages: [15, 50], age: [25, 8] },
+    { key: 'love', name: 'Love and romance', house: 5, also: [7, 11], karaka: 'Venus', ages: [15, 45], age: [23, 5] },
     { key: 'children', name: 'Children', house: 5, also: [2, 11], karaka: 'Jupiter', ages: [20, 45], age: [30, 5] },
     { key: 'home', name: 'Home and property', house: 4, also: [2, 11], karaka: 'Mars', ages: [22, 75], age: [38, 12] },
     { key: 'money', name: 'Money and gains', house: 11, also: [2, 9], karaka: 'Jupiter', ages: [18, 75] },

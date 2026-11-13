@@ -74,15 +74,18 @@
     career: (x) => `Your career grows through ${x}.`,
     loss: (x) => `Money tends to leak through ${x}.`,
   };
-  const EFFECT = { Sun: 'Pride or ego can get in the way here, so lead with warmth.',
-    Moon: 'Feelings run deep here and can swing with your mood.',
-    Mars: 'There is plenty of energy here, along with some arguments.',
-    Mercury: 'Talking things through is your strength here.',
-    Jupiter: 'There is real protection here: things tend to work out in the end.',
-    Venus: 'Warmth, charm and comfort come easily here.',
-    Saturn: 'Things move slowly here, but what you build lasts.',
-    Rahu: 'Expect the unusual: an unconventional choice, a foreign link or a sudden turn.',
-    Ketu: 'At times it can feel less satisfying than it looks from outside.' };
+  // What a planet in or aspecting the house means, said about that area (a = its noun)
+  const AREA_NOUN = { marriage: 'marriage', love: 'love', children: 'parenthood', home: 'home life', money: 'money', career: 'your career' };
+  const cap = (x) => x[0].toUpperCase() + x.slice(1);
+  const EFFECT = { Sun: (a) => `Pride or ego can get in the way in ${a}, so lead with warmth.`,
+    Moon: (a) => `Feelings run deep in ${a} and can swing with your mood.`,
+    Mars: (a) => `${cap(a)} brings plenty of energy, along with some arguments.`,
+    Mercury: (a) => `Talking things through is your strength in ${a}.`,
+    Jupiter: (a) => `There is real protection in ${a}: things tend to work out in the end.`,
+    Venus: (a) => `Warmth, charm and comfort come easily in ${a}.`,
+    Saturn: (a) => `${cap(a)} moves slowly, but what you build lasts.`,
+    Rahu: (a) => `Expect the unusual in ${a}: an unconventional choice, a foreign link or a sudden turn.`,
+    Ketu: (a) => `At times ${a} can feel less satisfying than it looks from outside.` };
   const KARAKA_TEXT = {
     Venus: { low: 'Affection may need more conscious effort from you.', high: 'Love and affection come naturally to you.' },
     Jupiter: { low: 'Good fortune here comes more from effort than from luck.', high: 'Good fortune and wise help tend to show up.' },
@@ -205,7 +208,9 @@
       const h = e.house, hs = VA.houseScore(chart, h, [e.karaka]), K = P[e.karaka];
       const sb = band('area', hs.pct);
       // plain text: what it means; notes: the chart facts behind it
-      const plain = [LINK[e.key](THROUGH[hs.lordHouse])];
+      // love reads Venus's house (who you fall for and where); the rest read the house lord
+      const plain = [LINK[e.key](THROUGH[e.key === 'love' ? P.Venus.house : hs.lordHouse])];
+      const loveNote = e.key === 'love' ? [`Venus, the planet of romance, sits in your ${VA.ordinal(P.Venus.house)} house, which shapes where love starts.`] : [];
       const why = [`Your ${VA.ordinal(h)} lord, ${hs.lord}, sits in your ${VA.ordinal(hs.lordHouse)} house, which links this area with ${THROUGH[hs.lordHouse]}.`];
       if ([6, 8, 12].includes(hs.lordHouse)) { plain.push('Expect some delay, distance or extra effort before it settles.'); why.push('The 6th, 8th and 12th are hard houses for a lord.'); }
       else if (hs.lordHouse === h) why.push('The lord sits in its own house, which keeps this area steady.');
@@ -214,7 +219,8 @@
       here.forEach((p) => what.push(`${p} in the ${VA.ordinal(h)} brings ${IN_HOUSE[p]}.`));
       const looks = Object.keys(LOOKS).filter((p) => !here.includes(p) && VA.aspects(chart, p, h));
       if (looks.length) what.push(looks.map((p) => `${p} aspects it: ${LOOKS[p]}.`).join(' '));
-      [...here, ...looks].forEach((p) => plain.push(EFFECT[p]));
+      [...here, ...looks].forEach((p) => plain.push(EFFECT[p](AREA_NOUN[e.key])));
+      what.push(...loveNote);
       const kState = [K.dignity && K.dignity.toLowerCase(), K.retro && 'retrograde', K.combust && 'combust'].filter(Boolean);
       const kb = band('planet', S[e.karaka].pct);
       if (KARAKA_TEXT[e.karaka][kb]) plain.push(KARAKA_TEXT[e.karaka][kb]);
