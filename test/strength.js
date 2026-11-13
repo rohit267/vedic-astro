@@ -1,0 +1,69 @@
+/* strength.js — self-check for the percentage engine: table checksums, bala formulas
+ * at known astronomical moments, ranges over 400 random charts, and stability. */
+const assert = require('assert');
+global.Astronomy = require('../vendor/astronomy.browser.min.js');
+['ephemeris', 'panchang', 'kundali', 'dasha', 'matching', 'strength', 'predictions'].forEach((m) => require('../js/' + m + '.js'));
+const VA = globalThis.VA;
+const NOW = new Date(Date.UTC(2026, 10, 13));
+const DELHI = { lat: 28.6139, lon: 77.209, tz: 5.5 };
+const at = (y, mo, d, hh = 12, mm = 0, place = { lat: 20, lon: 80, tz: 0 }) => VA.computeChart({ year: y, month: mo, day: d, hour: hh, minute: mm, ...place });
+const sum = (a) => a.reduce((x, y) => x + y, 0);
+
+// Ashtakavarga: BPHS totals per planet, 337 overall, in every chart
+const ref = require('./reference.json');
+const charts = ref.map((r) => {
+  const D = new Date((r.jd - 2440587.5) * 86400000);
+  return VA.computeChart({ year: D.getUTCFullYear(), month: D.getUTCMonth() + 1, day: D.getUTCDate(), hour: D.getUTCHours(), minute: D.getUTCMinutes(), second: D.getUTCSeconds(), tz: 0, lat: r.lat, lon: r.lon });
+});
+const WANT = { Sun: 48, Moon: 49, Mars: 39, Mercury: 54, Jupiter: 56, Venus: 52, Saturn: 39 };
+for (const c of charts) {
+  const { av, strength } = VA.analyse(c);
+  for (const p of VA.SEVEN) {
+    assert.strictEqual(sum(av.bav[p]), WANT[p], `${p} bindus`);
+    for (const [k, v] of Object.entries(strength[p].parts)) assert(v >= 0 && v <= VA.STRENGTH_MAX[k] + 1e-9, `${p} ${k} = ${v}`);
+  }
+  assert.strictEqual(sum(av.sav), 337);
+  for (const h of [1, 7, 10]) { const s = VA.houseScore(c, h, ['Jupiter']).pct; assert(s >= 0 && s <= 100); }
+}
+console.log('✅ Ashtakavarga totals (48/49/39/54/56/52/39 = 337) and bala ranges hold for', charts.length, 'charts');
+
+// Cheshta bala: ~60 mid-retrograde, ~0 at conjunction with the Sun
+const ch = (c, p) => VA.analyse(c).strength[p].parts.cheshta;
+assert(ch(at(2025, 1, 16), 'Mars') > 57, 'Mars at opposition');
+assert(ch(at(2024, 12, 7), 'Jupiter') > 57, 'Jupiter at opposition');
+assert(ch(at(2025, 3, 23), 'Venus') > 57, 'Venus at inferior conjunction');
+assert(ch(at(2024, 6, 4), 'Venus') < 3, 'Venus at superior conjunction');
+console.log('✅ Cheshta bala peaks at opposition / inferior conjunction, vanishes at conjunction');
+
+// Uccha bala: Sun at 10° Aries is 60, at 10° Libra is 0. Paksha: full Moon gives the Moon 60.
+const sunAt = (y, mo, d) => { const c = at(y, mo, d); return [c.planets.Sun.lon, VA.analyse(c).strength.Sun.parts.uccha]; };
+for (const [lon, u] of [sunAt(2024, 4, 23), sunAt(2024, 10, 27)]) assert(Math.abs(u - (180 - Math.min(Math.abs(lon - 10), 360 - Math.abs(lon - 10))) / 3) < 1e-9);
+assert(sunAt(2024, 4, 23)[1] > 59 && sunAt(2024, 10, 27)[1] < 1, 'Sun uccha at exaltation / debilitation');
+assert(VA.analyse(at(2024, 4, 23, 23, 49)).strength.Moon.parts.paksha > 59.5, 'full Moon paksha'); // full Moon 2024-04-23 23:49 UT
+console.log('✅ Uccha and paksha bala hit 60 / 0 at exaltation, debilitation and full Moon');
+
+// Historical time zone: India ran +6:30 war time in 1943
+assert.strictEqual(VA.zoneOffsetHours('Asia/Kolkata', 1943, 6, 1, 12, 0), 6.5);
+assert.strictEqual(VA.zoneOffsetHours('Asia/Kolkata', 1998, 7, 31, 23, 45), 5.5);
+console.log('✅ Historical time-zone offsets');
+
+// Every reading carries a percentage; exact birth time means 100% stable
+const demo = { year: 1947, month: 8, day: 15, hour: 0, minute: 0, ...DELHI };
+const flat = (r) => r.sections.flatMap((s) => s.items);
+const exact = flat(VA.readings(demo, NOW, 0));
+assert(exact.length >= 15);
+for (const i of exact) {
+  assert(Number.isFinite(i.stable) && i.stable === 100, i.id);
+  if (i.pct != null) assert(i.pct >= 0 && i.pct <= 100 && i.label && i.tone, i.id);
+}
+console.log('✅', exact.length, 'readings, each with a percentage');
+
+// One minute before the Lagna changes sign, a ±5 min window must split the Lagna reading
+let m = 0, first = VA.computeChart(demo).lagnaSign;
+while (VA.computeChart({ ...demo, minute: m + 1 }).lagnaSign === first) m++;
+const edge = flat(VA.readings({ ...demo, minute: m }, NOW, 5));
+const lagna = edge.find((i) => i.id === 'lagna'), moon = edge.find((i) => i.id === 'moon');
+assert(lagna.stable > 40 && lagna.stable < 70, `lagna stable ${lagna.stable}`);
+assert.strictEqual(moon.stable, 100);
+console.log(`✅ Stability: Lagna ${lagna.stable.toFixed(0)}% / Moon sign ${moon.stable.toFixed(0)}% when born 1 min before the Lagna changes (±5 min)`);
+console.log('\nALL STRENGTH CHECKS PASSED');

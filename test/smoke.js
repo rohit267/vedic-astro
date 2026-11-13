@@ -1,5 +1,5 @@
 global.Astronomy = require('../vendor/astronomy.browser.min.js');
-['ephemeris','panchang','kundali','dasha','matching','predictions','charts','cities'].forEach(m=>require('../js/'+m+'.js'));
+['ephemeris','panchang','kundali','dasha','matching','strength','predictions','charts','cities'].forEach(m=>require('../js/'+m+'.js'));
 const VA = globalThis.VA;
 const NOW = new Date(Date.UTC(2026,6,5));
 
@@ -10,7 +10,7 @@ console.log('Independence chart: Lagna', c1.ascendant.sign, '| Moon', c1.planets
 
 // Predictions
 const secs = VA.buildPredictions(c1, d1, NOW);
-console.log('Predictions sections:', secs.length, '| first title:', secs[0].title, '| paras:', secs[0].paras.length);
+console.log('Predictions sections:', secs.length, '| first title:', secs[0].title, '| items:', secs[0].items.length);
 console.log('  Sade Sati line present:', secs.some(s=>s.title.includes('Sade Sati')));
 
 // Cities

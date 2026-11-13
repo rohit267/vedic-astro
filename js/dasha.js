@@ -9,7 +9,7 @@
   const idxOf = (lord) => ORDER.findIndex((o) => o[0] === lord);
 
   function birthMs(input) {
-    return Date.UTC(input.year, input.month - 1, input.day, input.hour, input.minute, 0) - input.tz * 3600000;
+    return Date.UTC(input.year, input.month - 1, input.day, input.hour, input.minute, input.second || 0) - input.tz * 3600000;
   }
 
   // Build sub-periods of `parentYears` starting at `startMs`, cycling from `startLord`.

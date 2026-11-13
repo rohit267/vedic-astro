@@ -6,20 +6,28 @@
   const fmtMY = (ms) => new Date(ms).toLocaleDateString('en-IN', { year: 'numeric', month: 'short' });
   const fmtDeg = (d) => `${Math.floor(d)}°${String(Math.floor((d % 1) * 60)).padStart(2, '0')}'`;
 
-  let chart1 = null, dasha1 = null;
+  const pct = (x) => Math.round(x) + '%';
+  let chart1 = null, dasha1 = null, sections1 = [];
   let curVarga = 'ALL', curStyle = 'north';
   const NOW = new Date();
 
   /* ---------- input ---------- */
   function readPerson(pre) {
     const [y, mo, d] = $(pre + '-date').value.split('-').map(Number);
-    const [hh, mm] = $(pre + '-time').value.split(':').map(Number);
+    const [hh, mm, ss = 0] = $(pre + '-time').value.split(':').map(Number);
     return {
       name: $(pre + '-name').value.trim(),
-      year: y, month: mo, day: d, hour: hh, minute: mm,
+      year: y, month: mo, day: d, hour: hh, minute: mm, second: ss,
       lat: parseFloat($(pre + '-lat').value), lon: parseFloat($(pre + '-lon').value),
       tz: parseFloat($(pre + '-tz').value),
     };
+  }
+  // Listed cities are all in India: fill in the offset India actually kept on that date
+  // (e.g. +6:30 war time, 1942–45). IST starts in 1906; before that the field stays manual.
+  function autoTz(pre) {
+    const p = readPerson(pre);
+    if (!(p.year >= 1906) || isNaN(p.hour) || !VA.CITIES.some((c) => c.name === $(pre + '-place').value)) return;
+    $(pre + '-tz').value = +VA.zoneOffsetHours('Asia/Kolkata', p.year, p.month, p.day, p.hour, p.minute).toFixed(4);
   }
   function setupAutocomplete(pre) {
     const input = $(pre + '-place'), list = $(pre + '-place-list');
@@ -28,7 +36,7 @@
     const apply = (c) => {
       input.value = c.name;
       $(pre + '-lat').value = c.lat; $(pre + '-lon').value = c.lon; $(pre + '-tz').value = 5.5;
-      close();
+      autoTz(pre); close();
     };
     const paint = () => list.querySelectorAll('.ac-item').forEach((el, i) => el.classList.toggle('active', i === active));
     const render = () => {
@@ -42,6 +50,8 @@
         el.addEventListener('mousedown', (e) => { e.preventDefault(); apply(items[+el.dataset.i]); }));
     };
     input.addEventListener('input', render);
+    $(pre + '-date').addEventListener('change', () => autoTz(pre));
+    $(pre + '-time').addEventListener('change', () => autoTz(pre));
     input.addEventListener('focus', () => { if (input.value.trim()) render(); });
     input.addEventListener('blur', () => setTimeout(close, 120));
     input.addEventListener('keydown', (e) => {
@@ -55,7 +65,7 @@
 
   /* ---------- KUNDALI ---------- */
   function renderKundali() {
-    const c = chart1, P = c.planets;
+    const c = chart1, P = c.planets, S = VA.analyse(c).strength;
     const cur = dasha1.current;
     const stat = (k, v) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`;
     let html = `<div class="summary-row">
@@ -63,10 +73,10 @@
       ${stat('Moon (Rashi)', `${P.Moon.sign} · ${P.Moon.nakshatra}-${P.Moon.pada}`)}
       ${stat('Sun', `${P.Sun.sign}`)}
       ${stat('Now running', `${cur.md.lord} › ${cur.ad.lord}`)}
-      ${stat('Ayanamsa', `${c.ayanamsa.toFixed(2)}° Lahiri`)}
+      ${stat('Ayanamsa', `${c.ayanamsa.toFixed(4)}° Lahiri`)}
     </div>`;
     html += `<div class="card"><table class="grid"><thead><tr>
-      <th>Planet</th><th>Sign</th><th>Degree</th><th>Nakshatra (Pada)</th><th>House</th><th>State</th></tr></thead><tbody>`;
+      <th>Planet</th><th>Sign</th><th>Degree</th><th>Nakshatra (Pada)</th><th>House</th><th>Strength</th><th>State</th></tr></thead><tbody>`;
     for (const p of VA.PLANETS) {
       const pl = P[p];
       const tags = [];
@@ -76,11 +86,32 @@
       if (pl.retro) tags.push('<span class="pill retro">Retro</span>');
       if (pl.combust) tags.push('<span class="pill comb">Combust</span>');
       html += `<tr><td><b>${p}</b></td><td>${pl.sign}</td><td>${fmtDeg(pl.signDeg)}</td>
-        <td>${pl.nakshatra} (${pl.pada})</td><td>${pl.house}</td><td>${tags.join(' ') || '—'}</td></tr>`;
+        <td>${pl.nakshatra} (${pl.pada})</td><td>${pl.house}</td>
+        <td>${S[p] ? `<span class="pct ${VA.scoreTone('planet', S[p].pct)}">${pct(S[p].pct)}</span>` : '—'}</td><td>${tags.join(' ') || '—'}</td></tr>`;
     }
     html += `</tbody></table></div>`;
+    html += strengthPanel(c);
     html += manglikPanel(c);
     $('tab-kundali').innerHTML = html;
+  }
+
+  // The raw numbers every percentage is built from
+  function strengthPanel(chart) {
+    const { strength, av } = VA.analyse(chart), keys = Object.keys(VA.STRENGTH_MAX);
+    const total = keys.reduce((a, k) => a + VA.STRENGTH_MAX[k], 0);
+    let h = `<details class="card"><summary>Planet strength — seven classical balas, in virupas</summary>
+      <div class="scroll"><table class="grid num"><thead><tr><th>Planet</th>${keys.map((k) => `<th>${k}<br/><span class="hint">/${VA.STRENGTH_MAX[k]}</span></th>`).join('')}<th>Total<br/><span class="hint">/${total}</span></th><th>%</th></tr></thead><tbody>`;
+    for (const p of VA.SEVEN) {
+      h += `<tr><td><b>${p}</b></td>${keys.map((k) => `<td>${strength[p].parts[k].toFixed(1)}</td>`).join('')}
+        <td><b>${strength[p].total.toFixed(1)}</b></td><td>${pct(strength[p].pct)}</td></tr>`;
+    }
+    h += `</tbody></table></div><p class="hint">Uccha = distance from deep debilitation · rasi / navamsa = dignity in D1 / D9 · kendra = angular house · dig = directional · paksha = lunar phase · cheshta = motion. Rahu and Ketu act through the lord of their sign.</p></details>`;
+    h += `<details class="card"><summary>Ashtakavarga — bindus per sign</summary>
+      <div class="scroll"><table class="grid num"><thead><tr><th></th>${VA.SIGN_SHORT.map((s, i) => `<th>${s}${i === chart.lagnaSign ? '<br/><span class="hint">Lagna</span>' : ''}</th>`).join('')}</tr></thead><tbody>`;
+    for (const p of VA.SEVEN) h += `<tr><td><b>${p}</b></td>${av.bav[p].map((b) => `<td class="${b >= 5 ? 'g' : b <= 3 ? 'b' : ''}">${b}</td>`).join('')}</tr>`;
+    h += `<tr><td><b>All (SAV)</b></td>${av.sav.map((b) => `<td class="${b >= 30 ? 'g' : b < 25 ? 'b' : ''}"><b>${b}</b></td>`).join('')}</tr>`;
+    h += `</tbody></table></div><p class="hint">Each planet scores 0–8 per sign (4+ is favourable for its transit); the total row is out of 56, with 28 the average.</p></details>`;
+    return h;
   }
 
   function manglikPanel(chart) {
@@ -149,52 +180,57 @@
   }
 
   /* ---------- TIMING (good / bad) ---------- */
-  const TONE = { Jupiter: ['good', 'expansive & lucky'], Venus: ['good', 'sweet & comfortable'],
-    Mercury: ['good', 'busy, clever, communicative'], Moon: ['good', 'gentle & emotional'],
-    Sun: ['warn', 'about identity & recognition'], Saturn: ['warn', 'heavy but strengthening'],
-    Mars: ['warn', 'high energy, watch temper'], Rahu: ['warn', 'ambitious & unpredictable'],
-    Ketu: ['warn', 'inward, detaching, low worldly gain'] };
+  // General flavour of each lord; whether it is good for THIS chart comes from VA.periodScore
+  const TONE = { Jupiter: 'expansive & lucky', Venus: 'sweet & comfortable',
+    Mercury: 'busy, clever, communicative', Moon: 'gentle & emotional',
+    Sun: 'about identity & recognition', Saturn: 'heavy but strengthening',
+    Mars: 'high energy, watch temper', Rahu: 'ambitious & unpredictable',
+    Ketu: 'inward, detaching, low worldly gain' };
   function renderTiming() {
-    const c = chart1, P = c.planets;
-    // Sade Sati
-    const t = VA.makeTime(NOW.getUTCFullYear(), NOW.getUTCMonth() + 1, NOW.getUTCDate(), NOW.getUTCHours(), NOW.getUTCMinutes(), 0);
-    const satSign = Math.floor(VA.siderealLon('Saturn', t) / 30);
-    const fromMoon = ((satSign - P.Moon.signIdx + 12) % 12) + 1;
-    const inSS = [12, 1, 2].includes(fromMoon);
-    const mang = VA.manglik(c);
+    const c = chart1;
+    const ss = VA.sadeSati(c, NOW), mang = VA.manglik(c);
+    const mdL = dasha1.current.md.lord, adL = dasha1.current.ad.lord, nowScore = VA.periodScore(c, mdL, adL).pct;
 
     let html = `<div class="card"><h3>Your current season</h3>`;
-    const [tone, desc] = TONE[dasha1.current.md.lord];
-    html += `<p>You are in a <b>${dasha1.current.md.lord}</b> Mahadasha — ${desc} — with <b>${dasha1.current.ad.lord}</b> running inside it (${desc && TONE[dasha1.current.ad.lord][1]}).</p>`;
-    html += `<div class="dosha-note" style="border-left:3px solid var(--${inSS ? 'warn' : 'good'})">
-      <b>Sade Sati:</b> ${inSS ? `Active — Saturn is in ${VA.SIGNS[satSign]}, the ${fromMoon === 12 ? '12th (rising)' : fromMoon === 1 ? '1st (peak)' : '2nd (setting)'} from your Moon. A heavy but maturing ~2.5-year stretch; go steady.` : `Not active right now — Saturn is in ${VA.SIGNS[satSign]}, the ${VA.ordinal(fromMoon)} from your Moon.`}</div>`;
+    html += `<p>You are in a <b>${mdL}</b> Mahadasha — ${TONE[mdL]} — with <b>${adL}</b> running inside it (${TONE[adL]}).
+      For this chart that scores <span class="pct ${VA.scoreTone('period', nowScore)}">${pct(nowScore)}</span> favourable.</p>`;
+    html += `<div class="dosha-note" style="border-left:3px solid var(--${ss.active ? 'warn' : 'good'})">
+      <b>Sade Sati:</b> ${ss.active ? `Active — Saturn is in ${VA.SIGNS[ss.sign]}, the ${ss.phase} from your Moon, holding ${ss.bindus} of 8 bindus there: pressure <b>${pct((8 - ss.bindus) / 8 * 100)}</b>. A heavy but maturing ~2.5-year stretch; go steady.` : `Not active right now — Saturn is in ${VA.SIGNS[ss.sign]}, the ${VA.ordinal(ss.fromMoon)} from your Moon.`}</div>`;
     html += `<div class="dosha-note" style="border-left:3px solid var(--${mang.isManglik ? 'warn' : 'good'})">
       <b>Manglik:</b> ${mang.isManglik ? `Yes — flagged from ${mang.flaggedFrom.join(', ')}.${mang.marsDignity === 'Debilitated' ? ' Mars is debilitated (weak), which softens it.' : ''}` : 'No — Mars is clear of the sensitive houses.'}</div>`;
     html += `</div>`;
 
     // Upcoming antardashas across current + next maha, with tone
-    html += `<div class="card"><h3>Periods ahead — the flavour of each</h3><div class="dasha-list">`;
+    html += `<div class="card"><h3>Periods ahead — how favourable each is for this chart</h3><div class="dasha-list">`;
     const upcoming = [];
     const idx = dasha1.maha.indexOf(dasha1.current.md);
     [dasha1.maha[idx], dasha1.maha[idx + 1]].filter(Boolean).forEach((md) => {
       md.antar.forEach((ad) => { if (ad.endMs > NOW.getTime()) upcoming.push({ md: md.lord, ad }); });
     });
     upcoming.slice(0, 10).forEach(({ md, ad }) => {
-      const [tn, ds] = TONE[ad.lord];
+      const score = VA.periodScore(c, md, ad.lord).pct, tn = VA.scoreTone('period', score);
       html += `<div class="dasha-row" style="border-left:3px solid var(--${tn})">
         <span class="lord">${md}–${ad.lord}</span>
         <span class="dates">${fmtMY(ad.startMs)} → ${fmtMY(ad.endMs)}</span>
-        <span style="color:var(--${tn})">${ds}</span></div>`;
+        <span><span class="pct ${tn}">${pct(score)}</span> ${TONE[ad.lord]}</span></div>`;
     });
-    html += `</div><p class="hint">“Good” and “heavy” are tendencies, not guarantees. A Saturn stretch builds things that last; a Venus stretch is pleasant but you still have to show up.</p></div>`;
+    html += `</div><p class="hint">The percentage blends each lord's strength, the houses it rules for your Lagna, where it sits, and how the two lords stand to each other. It is a tendency, not a guarantee: a Saturn stretch builds things that last; a Venus stretch is pleasant but you still have to show up.</p></div>`;
     $('tab-timing').innerHTML = html;
   }
 
   /* ---------- READINGS ---------- */
+  function claimHTML(i) {
+    // Scored readings lead with the score; plain facts lead with how certain the birth time makes them
+    const head = i.pct != null
+      ? `<span class="pct ${i.tone}">${pct(i.pct)}</span> <span class="pct-label">${i.label}</span><span class="stable">birth-time stable ${pct(i.stable)}</span>`
+      : `<span class="pct ${i.stable >= 90 ? 'good' : 'warn'}">${pct(i.stable)}</span> <span class="pct-label">certain for this birth time</span>`;
+    const why = !i.factors ? '' : `<details><summary>Why ${pct(i.pct)}</summary><table class="grid why"><tbody>${i.factors.map((f) =>
+      `<tr><td>${f.label}</td><td>${pct(f.pct)}</td><td class="hint">${f.w ? 'weight ' + f.w : ''}</td></tr>`).join('')}</tbody></table></details>`;
+    return `<div class="claim ${i.tone || ''}"><div class="claim-head">${head}</div><p>${mdBold(i.text)}</p>${why}</div>`;
+  }
   function renderReading() {
-    const secs = VA.buildPredictions(chart1, dasha1, NOW);
-    $('tab-reading').innerHTML = secs.map((s) =>
-      `<div class="reading-sec"><h3>${s.icon} ${s.title}</h3>${s.paras.map((p) => `<p>${mdBold(p)}</p>`).join('')}</div>`).join('');
+    $('tab-reading').innerHTML = sections1.map((s) =>
+      `<div class="reading-sec"><h3>${s.icon} ${s.title}</h3>${s.items.map(claimHTML).join('')}${s.note ? `<p class="hint">${mdBold(s.note)}</p>` : ''}</div>`).join('');
   }
 
   /* ---------- MATCHING ---------- */
@@ -210,16 +246,16 @@
       : 'On paper this is on the lower side. That doesn\'t doom anything — a low score often just means two Moon-signs that differ, and cancellable doshas. The real test is how you actually feel together.';
 
     let html = `<div class="verdict card">
-      <div class="score">${m.total}<span class="of"> / 36</span></div>
+      <div class="score">${m.total}<span class="of"> / 36 · ${pct(m.total / 36 * 100)}</span></div>
       <p>${n1} (${chart1.planets.Moon.sign}/${chart1.planets.Moon.nakshatra}) × ${n2} (${c2.planets.Moon.sign}/${c2.planets.Moon.nakshatra})</p>
       ${m.doshas.nadiCancellable ? `<p class="hint">Nadi dosha looks cancellable → effective ~${m.totalWithNadiCancel}/36</p>` : ''}
     </div>`;
     html += `<div class="card"><table class="grid koota-table"><thead><tr><th>Koota</th><th>Score</th><th>What it covers</th></tr></thead><tbody>`;
     m.kootas.forEach((k) => {
       const cls = k.got === 0 ? 'b' : (k.got >= k.max * 0.75 ? 'g' : '');
-      html += `<tr><td><b>${k.name}</b></td><td class="${cls}">${k.got} / ${k.max}</td><td>${k.note}</td></tr>`;
+      html += `<tr><td><b>${k.name}</b></td><td class="${cls}">${k.got} / ${k.max} · ${pct(k.got / k.max * 100)}</td><td>${k.note}</td></tr>`;
     });
-    html += `<tr><td><b>Total</b></td><td><b>${m.total} / 36</b></td><td></td></tr></tbody></table></div>`;
+    html += `<tr><td><b>Total</b></td><td><b>${m.total} / 36 · ${pct(m.total / 36 * 100)}</b></td><td></td></tr></tbody></table></div>`;
 
     // doshas
     const mA = VA.manglik(chart1), mB = VA.manglik(c2);
@@ -256,8 +292,8 @@
   /* ---------- main ---------- */
   function calc() {
     try {
-      chart1 = VA.computeChart(readPerson('p1'));
-      dasha1 = VA.vimshottari(chart1, NOW);
+      const r = VA.readings(readPerson('p1'), NOW, Math.max(0, parseFloat($('p1-unc').value) || 0));
+      chart1 = r.chart; dasha1 = r.dasha; sections1 = r.sections;
       renderKundali(); renderCharts(); renderDasha(); renderTiming(); renderReading();
     } catch (e) {
       $('tab-kundali').innerHTML = `<p class="empty">Could not compute: ${e.message}. Check the date/time/place.</p>`;

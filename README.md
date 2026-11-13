@@ -15,18 +15,53 @@ computed live in your browser — no backend, no tracking, nothing ever leaves y
 - **Good / Bad times** — Sade Sati status, Manglik check, and the flavour of the periods ahead.
 - **Matching** — full 36-guna Ashtakoota (Guna Milan) with Bhakoot / Nadi / Manglik doshas
   and their cancellation rules.
-- **Readings** — plain-spoken, honest interpretations. A chart is treated as a *map of
-  tendencies and seasons*, never a verdict.
+- **Readings** — plain-spoken, honest interpretations, **each with a percentage** and a
+  "Why" breakdown. A chart is treated as a *map of tendencies and seasons*, never a verdict.
+- **Strength tables** — seven classical balas per planet (virupas) and full Ashtakavarga.
 
 ## How the accuracy works
 
 Raw planetary positions come from **[astronomy-engine](https://github.com/cosinekitty/astronomy)**
-(MIT, arc-second accurate, vendored as a single file). Every astrology-specific step —
-**Lahiri (Chitrapaksha) ayanamsa**, ascendant, mean-node Rahu/Ketu, whole-sign houses,
-nakshatra/pada, Vimshottari dasha and the Ashtakoota tables — is implemented here and
-cross-checked against hand-verified charts. See `test/validate.js`.
+(MIT, vendored as a single file). The astrology-specific steps are implemented here and
+checked against **Swiss Ephemeris** (Lahiri, 400 random instants 1900–2100, `test/reference.json`):
+
+| Quantity | Worst error | Note |
+|---|---|---|
+| Lahiri ayanamsa | 0.001″ | J2000 value + IAU 2006 precession |
+| Sun | 2″ | |
+| Moon | 3″ for dates to 2026 | 14″ by 2100, where ΔT is a forecast |
+| Mars, Mercury, Jupiter, Saturn | 10–11″ | limit of the library's truncated VSOP87 |
+| Venus | 19″ | same limit, worst near inferior conjunction |
+| Mean Rahu / Ketu | 0.3″ | |
+| Ascendant, Midheaven | 4″, 2″ | |
+
+What makes the difference: nutation is removed before the ayanamsa is subtracted (the stars
+do not nutate), and ΔT uses observed IERS values from 2005 on. For scale, even the
+worst-case 20″ puts a planet in the wrong navamsa only about 1 time in 600, and the Moon's 3″ shifts a dasha
+date by under half a day. Birth time accepts seconds, and Indian cities get the offset India
+actually kept on that date (for example +6:30 war time in 1942–45).
+
+## What the percentages mean
+
+Every reading shows one or both of:
+
+- **A score** (expression / support / strength / favourable): how strongly the classical
+  indicators line up in this chart. It is a weighted blend of planet strength (uccha, rasi and
+  navamsa dignity, kendra, dig, paksha and cheshta bala, in virupas), Ashtakavarga bindus,
+  house lordship, placement, occupants and aspects. "Why" under each reading shows the sum.
+  The bala formulas and bindu tables are from Brihat Parashara Hora Shastra; the blend
+  weights are this app's own and sit in three small tables at the bottom of `js/strength.js`.
+- **Birth-time stable**: the chart is re-cast at 21 times across your "± min" window and
+  this is the share that give the same reading. Plain facts (Lagna sign, Sade Sati) show
+  only this, as "certain".
+
+Neither number is a measured chance of an event. No such data exists for astrology, and
+controlled tests have not found it to predict outcomes. The percentages make the reading
+transparent and repeatable; they do not make it a forecast.
 
 ```bash
+node test/accuracy.js   # positions vs Swiss Ephemeris, with an arc-second budget per body
+node test/strength.js   # bala formulas, Ashtakavarga checksums (337), stability
 node test/validate.js   # reproduces known charts + guna scores (15 checks)
 node test/smoke.js      # full-pipeline integration run
 ```
@@ -46,12 +81,13 @@ python3 -m http.server 8137
 index.html              page + tab structure
 styles.css              dark celestial theme, responsive
 vendor/astronomy…js     planetary ephemeris (MIT)
-js/ephemeris.js         sidereal longitudes, ayanamsa, ascendant, nodes
+js/ephemeris.js         sidereal longitudes, ayanamsa, ascendant, midheaven, nodes, ΔT
 js/panchang.js          signs/nakshatras, dignity, combustion, varga rules D1–D9
 js/kundali.js           assemble a full chart
 js/dasha.js             Vimshottari dasha
 js/matching.js          Ashtakoota guna milan + doshas
-js/predictions.js       rule-based readings
+js/strength.js          planet balas, Ashtakavarga, house and dasha scores
+js/predictions.js       rule-based readings with percentages + birth-time stability
 js/charts.js            North / South / East SVG renderers
 js/cities.js            India birthplace lat/lon lookup
 js/app.js               UI wiring

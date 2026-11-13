@@ -120,3 +120,22 @@ table.grid tr:hover td { background: rgba(139,124,255,.06); }
   .tabs { overflow-x: auto; flex-wrap: nowrap; }
   .tabs button { white-space: nowrap; }
 }
+
+/* percentages */
+.pct { display: inline-block; min-width: 3.2em; text-align: center; padding: 1px 8px; border-radius: 20px; font-weight: 700; font-variant-numeric: tabular-nums; background: rgba(154,160,196,.15); }
+.pct.good { background: rgba(70,209,158,.16); color: var(--good); }
+.pct.warn { background: rgba(255,180,84,.16); color: var(--warn); }
+.pct.bad { background: rgba(255,107,125,.16); color: var(--bad); }
+.pct-label { color: var(--muted); font-size: .82rem; }
+.stable { float: right; color: var(--muted); font-size: .78rem; }
+.claim { border-left: 3px solid var(--line); padding: 8px 0 8px 12px; margin: 10px 0; }
+.claim.good { border-left-color: var(--good); } .claim.warn { border-left-color: var(--warn); } .claim.bad { border-left-color: var(--bad); }
+.claim p { margin: 6px 0 0; }
+.claim details { margin-top: 6px; font-size: .84rem; }
+summary { cursor: pointer; color: var(--muted); }
+details.card > summary { color: var(--ink); font-weight: 600; }
+.why td { padding: 3px 10px 3px 0; border: 0; }
+.scroll { overflow-x: auto; }
+.num td, .num th { text-align: right; font-variant-numeric: tabular-nums; }
+.num td:first-child, .num th:first-child { text-align: left; }
+.num td.g { color: var(--good); } .num td.b { color: var(--bad); }

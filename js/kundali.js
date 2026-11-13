@@ -4,9 +4,9 @@
   const VA = (root.VA = root.VA || {});
   const norm360 = (x) => ((x % 360) + 360) % 360;
 
-  /* input: {year, month, day, hour, minute, tz (hours, e.g. 5.5), lat, lon, name?} */
+  /* input: {year, month, day, hour, minute, second?, tz (hours, e.g. 5.5), lat, lon, name?} */
   function computeChart(input) {
-    const t = VA.makeTime(input.year, input.month, input.day, input.hour, input.minute, input.tz);
+    const t = VA.makeTime(input.year, input.month, input.day, input.hour, input.minute, input.tz, input.second || 0);
     const rk = VA.rahuKetu(t);
     const rawLon = {
       Sun: VA.siderealLon('Sun', t),
@@ -50,6 +50,7 @@
     return {
       input, time: t,
       ascendant: { ...asc, lon: ascLon },
+      mc: VA.midheaven(t, input.lon),
       lagnaSign, houses, planets,
       ayanamsa: VA.ayanamsa(t),
     };
